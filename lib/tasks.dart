@@ -65,7 +65,6 @@ class _TasksPageState extends State<TasksPage> {
   //       HttpHeaders.authorizationHeader: 'Basic ${Hive.box<Token>('tokenBox').getAt(0)?.accessToken}'
   //     }
   // ));
-  Future<Token>? _futureToken;
 
   @override
   Widget build(BuildContext context) {
@@ -141,54 +140,54 @@ class _TasksPageState extends State<TasksPage> {
                 valueListenable: tasksBox.listenable(),
                 builder:
                     (BuildContext context, Box<Task> value, Widget? child) {
-                  return
-                    tasksBox.isEmpty
-                      ? const Text('No tasks found')
-                      : RefreshIndicator(
-                          child: ListView.builder(
-                              shrinkWrap: true,
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              itemCount: tasksBox.length,
-                              itemBuilder: (context, listIndex) {
-                                return Card(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  shadowColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                      side: const BorderSide(
-                                          color: Color.fromRGBO(
-                                              233, 241, 255, 1))),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Checkbox(
-                                            value: true,
-                                            onChanged: (bool? value) {},
-                                          ),
-                                          // const Text('Text text text')
-                                          Text(tasksBox.getAt(listIndex)!.title)
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          const Chip(label: Text('tag text')),
-                                          Text(DateFormat('dd MMMM HH:mm')
-                                              .format(DateTime.now()))
-                                        ],
-                                      )
-                                    ],
-                                  ),
-                                );
-                              }),
-                          onRefresh: () {
-                            return Future.delayed(Duration(seconds: 1), () {
-                              setState(() {
-                                _tasks = getTasks();
-                              });
-                            });
-                          });
+                  return buildFutureBuilder();
+                    // tasksBox.isEmpty
+                    //   ? const Text('No tasks found')
+                    //   : RefreshIndicator(
+                    //       child: ListView.builder(
+                    //           shrinkWrap: true,
+                    //           physics: const AlwaysScrollableScrollPhysics(),
+                    //           itemCount: tasksBox.length,
+                    //           itemBuilder: (context, listIndex) {
+                    //             return Card(
+                    //               color: Theme.of(context).colorScheme.surface,
+                    //               shadowColor: Colors.transparent,
+                    //               shape: RoundedRectangleBorder(
+                    //                   borderRadius: BorderRadius.circular(15),
+                    //                   side: const BorderSide(
+                    //                       color: Color.fromRGBO(
+                    //                           233, 241, 255, 1))),
+                    //               child: Column(
+                    //                 mainAxisSize: MainAxisSize.min,
+                    //                 children: [
+                    //                   Row(
+                    //                     children: [
+                    //                       Checkbox(
+                    //                         value: true,
+                    //                         onChanged: (bool? value) {},
+                    //                       ),
+                    //                       // const Text('Text text text')
+                    //                       Text(tasksBox.getAt(listIndex)!.title)
+                    //                     ],
+                    //                   ),
+                    //                   Row(
+                    //                     children: [
+                    //                       const Chip(label: Text('tag text')),
+                    //                       Text(DateFormat('dd MMMM HH:mm')
+                    //                           .format(DateTime.now()))
+                    //                     ],
+                    //                   )
+                    //                 ],
+                    //               ),
+                    //             );
+                    //           }),
+                    //       onRefresh: () {
+                    //         return Future.delayed(const Duration(seconds: 1), () {
+                    //           setState(() {
+                    //             _tasks = getTasks();
+                    //           });
+                    //         });
+                    //       });
                 },
               )
             ]))
@@ -202,7 +201,6 @@ class _TasksPageState extends State<TasksPage> {
     FlutterSecureStorage storage = const FlutterSecureStorage();
     Response<dynamic> response;
     var token = await storage.read(key: 'access_token');
-    // String token = Hive.box<Token>('tokenBox').getAt(0)!.accessToken;
     var dio = Dio(BaseOptions(
         baseUrl: 'https://test-mobile.estesis.tech/api/v1',
         headers: {
@@ -219,10 +217,10 @@ class _TasksPageState extends State<TasksPage> {
         tasks = (response.data['items'] as List)
             .map((i) => Task.fromJson(i))
             .toList();
-        if (tasksBox.isNotEmpty) {
-          tasksBox.clear();
-        }
-        tasksBox.addAll(tasks);
+        // if (tasksBox.isNotEmpty) {
+        //   tasksBox.clear();
+        // }
+        // tasksBox.addAll(tasks);
         return tasks;
       } else {
         throw Exception('Tasks not found!');
@@ -232,36 +230,76 @@ class _TasksPageState extends State<TasksPage> {
     }
   }
 
-// Future<UserCreate> createUser (String name, String email, String password) async {
-//   UserCreate userCreate = UserCreate(name, email, password);
-//   final response = await post(
-//       Uri.parse('https://test-mobile.estesis.tech/api/v1/register'),
-//       headers: <String, String> {
-//         'Content-Type':'application/json',
-//         'accept' : 'application/json'
-//       },
-//     body: jsonEncode(userCreate.toJson())
-//   );
-//   if (response.statusCode == 200) {
-//     return UserCreate.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
-//   } else {
-//     print(response);
-//     throw Exception('Ошибка регистрации!');
-//   }
-// }
-
-//   FutureBuilder<List<Task>> buildFutureBuilder() {
-//     return FutureBuilder<List<Task>>(
-//       future: _futureTasks,
-//       builder: (context, snapshot) {
-//         if (snapshot.hasData) {
-//           return Text(snapshot.data!);
-//         } else if (snapshot.hasError) {
-//           return Text('${snapshot.error}');
-//         }
-//
-//         return const CircularProgressIndicator();
-//       },
-//     );
-//   }
+  FutureBuilder<List<Task>> buildFutureBuilder() {
+    return FutureBuilder<List<Task>>(
+      future: _tasks,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return ListView.builder(
+              shrinkWrap: true,
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: snapshot.data?.length,
+              itemBuilder: (context, listIndex) {
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 1),
+                  color: Theme.of(context).colorScheme.surface,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      side: const BorderSide(
+                          color: Color.fromRGBO(
+                              233, 241, 255, 1))),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: true,
+                            onChanged: (bool? value) {
+                              //TODO implement task completion
+                            },
+                          ),
+                          // const Text('Text text text')
+                          Text(snapshot.data!.elementAt(listIndex).title,
+                          style: const TextStyle(
+                            fontSize: 16
+                          ),)
+                        ],
+                      ),
+                      Padding(
+                          padding: const EdgeInsets.only(left: 50, right: 50, bottom: 20),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.sell_outlined,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 15,
+                              ),
+                              const SizedBox(width: 5,),
+                              Text(snapshot.data!.elementAt(listIndex).tag.name,
+                              style: const TextStyle(
+                                color: Color.fromRGBO(141, 141, 141, 1),
+                              ),),
+                              // const Chip(label: Text('tag text')),
+                              const SizedBox(width: 10,),
+                              Text(DateFormat('dd MMMM HH:mm')
+                                  .format(snapshot.data!.elementAt(listIndex).createdAt),
+                              style: const TextStyle(
+                                color: Color.fromRGBO(254, 181, 189, 1)
+                              ),),
+                            ],
+                          )
+                      )
+                    ],
+                  ),
+                );
+              });
+        } else if (snapshot.hasError) {
+          return Text('${snapshot.error}');
+        }
+        return const CircularProgressIndicator();
+      },
+    );
+  }
 }
