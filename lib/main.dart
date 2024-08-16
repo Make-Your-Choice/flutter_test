@@ -1,18 +1,25 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:project1/login.dart';
 import 'package:project1/model/tag.dart';
 import 'package:project1/model/task.dart';
+import 'package:project1/model/token.dart';
 
+import 'login.dart';
 import 'model/user.dart';
 
 void main() async {
   await Hive.initFlutter();
+  // final encryptionKey = Hive.generateSecureKey();
+  // Hive.registerAdapter(TokenAdapter());
+  Hive.registerAdapter(TaskAdapter());
+  Hive.registerAdapter(TagAdapter());
+  Hive.registerAdapter(PriorityAdapter());
   await Hive.openBox<User>('userBox');
   await Hive.openBox<Task>('taskBox');
   await Hive.openBox<Tag>('tagBox');
+  // await Hive.openBox<Token>('tokenBox',
+  //     encryptionCipher: HiveAesCipher(encryptionKey));
+  // Hive.box<Token>('tokenBox').clear();
   runApp(const MyApp());
 }
 
@@ -24,196 +31,112 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrangeAccent),
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.white,
+            primary: const Color.fromRGBO(117, 110, 243, 1)),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class MyHomePage extends StatelessWidget {
-  const MyHomePage({required this.title});
-
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      //   title: Text(title),
-      // ),
-      body: Center(
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
+        backgroundColor: const Color.fromRGBO(102, 82, 255, 1),
+        body: SizedBox(
+          height: MediaQuery.of(context).size.height,
+          child: Stack(children: [
             Image.asset(
               'assets/images/splash.png',
               fit: BoxFit.fitHeight,
-              height: 375,
+              height: 400,
             ),
-              Container(
-                 // height: double.infinity,
+            Positioned(
+              bottom: 0,
+              right: 0,
+              left: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 80.0, horizontal: 40.0),
+                height: MediaQuery.of(context).size.height - 370,
+                alignment: Alignment.center,
                 decoration: const BoxDecoration(
                   borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20)),
-                  color: Colors.redAccent,
+                  color: Colors.white,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context, 
-                            MaterialPageRoute(builder: (context) => const LoginPage(title: 'Flutter Demo Home Page'))
-                        );
-                      },
-                      child: const Text('Начать'),
+                child: Column(children: [
+                  Image.asset('assets/images/logo.png', fit: BoxFit.fitHeight),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  const Text(
+                    'Personal task tracker',
+                    softWrap: true,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 40, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  const Text(
+                    'Bottom text - bottom text',
+                    softWrap: true,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color.fromRGBO(141, 141, 141, 1)),
+                  ),
+                  const SizedBox(
+                    height: 80,
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const LoginPage(title: 'Sign In')));
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 60,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          stops: [0.2, 0.5],
+                          colors: [
+                            Color.fromRGBO(139, 120, 255, 1),
+                            Color.fromRGBO(84, 81, 214, 0.8)
+                          ],
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(15)),
+                      ),
+                      child: const Text(
+                        'Continue',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 20,
+                            height: 1.35,
+                            color: Colors.white),
+                      ),
                     ),
-                  ],
-                ),
-                // child: Padding(
-                //   padding: const EdgeInsets.only(
-                //       left: 10.0, right: 10.0, top: 0.0, bottom: 0.0),
-                //
-                //
-                // )
-              )
-            ])
-          )
-
-          //)
-    );
+                  )
+                ]),
+              ),
+            )
+          ]),
+        ));
   }
 }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Flutter Demo',
-//       theme: ThemeData(
-//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrangeAccent),
-//         useMaterial3: true,
-//       ),
-//       home: const MyHomePage(title: 'Flutter Demo Home Page'),
-//       debugShowCheckedModeBanner: false,
-//     );
-//   }
-// }
-//
-// class MyHomePage extends StatefulWidget {
-//   const MyHomePage({super.key, required this.title});
-//   final String title;
-//   @override
-//   State<MyHomePage> createState() => _MyHomePageState();
-// }
-//
-// class _MyHomePageState extends State<MyHomePage> {
-//   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-//   Future<User>? _futureUser;
-//   final TextEditingController _nameController = TextEditingController();
-//   final TextEditingController _emailController = TextEditingController();
-//   final TextEditingController _passwordController = TextEditingController();
-//
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-//         title: Text(widget.title),
-//       ),
-//       body: Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: <Widget>[
-//             Padding(
-//                 padding: const EdgeInsets.all(20.0),
-//               child: Form(
-//                 key: _formKey,
-//                 child: Column (
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   children: <Widget>[
-//                     TextFormField(
-//                       decoration: const InputDecoration(
-//                         hintText: 'Имя',
-//                       ),
-//                       controller: _nameController,
-//                       validator: (String? value) {
-//                         if (value == null || value.isEmpty) {
-//                           return 'Введите имя';
-//                         }
-//                         return null;
-//                       },
-//                     ),
-//                     TextFormField(
-//                       decoration: const InputDecoration(
-//                         hintText: 'Email',
-//                       ),
-//                       controller: _emailController,
-//                       validator: (String? value) {
-//                         if (value == null || value.isEmpty) {
-//                           return 'Введите email';
-//                         }
-//                         return null;
-//                       },
-//                     ),
-//                     TextFormField(
-//                       decoration: const InputDecoration(
-//                         hintText: 'Пароль',
-//                       ),
-//                       controller: _passwordController,
-//                       validator: (String? value) {
-//                         if (value == null || value.isEmpty) {
-//                           return 'Введите пароль';
-//                         }
-//                         return null;
-//                       },
-//                     ),
-//                     ElevatedButton(
-//                       onPressed: () {
-//                         if(_formKey.currentState!.validate()) {
-//                           _futureUser = createUser(_nameController.text, _emailController.text, _passwordController.text);
-//                         }
-//                       },
-//                       child: const Text('Сохранить'),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//
-//             )
-//
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-//
-// Future<User> createUser (String name, String email, String password) async {
-//   final response = await post(
-//       Uri.parse('https://test-mobile.estesis.tech/api/v1/register'),
-//       headers: <String, String> {
-//         'Content-Type':'application/json; charset=UTF-8',
-//       },
-//       body: jsonEncode(<String, String> {
-//         'name': name,
-//         'email': email,
-//         'password': password
-//       })
-//   );
-//   if (response.statusCode == 200) {
-//     return User.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
-//   } else {
-//     throw Exception('Ошибка регистрации!');
-//   }
-// }
-//

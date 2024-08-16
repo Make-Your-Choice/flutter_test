@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
@@ -8,26 +7,29 @@ import 'login.dart';
 import 'model/user.dart';
 import 'model/user_create.dart';
 
-class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key, required this.title});
+class AddTaskPage extends StatefulWidget {
+  const AddTaskPage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<RegisterPage> createState() => _RegisterPageState();
+  State<AddTaskPage> createState() => _AddTaskPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
+class _AddTaskPageState extends State<AddTaskPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final dio = Dio(
-      BaseOptions(baseUrl: 'https://test-mobile.estesis.tech/api/v1', headers: {
-    HttpHeaders.contentTypeHeader: 'application/json',
-    HttpHeaders.acceptHeader: 'application/json'
-  }));
+  // final dio = Dio(
+  //     BaseOptions(baseUrl: 'https://test-mobile.estesis.tech/api/v1', headers: {
+  //       HttpHeaders.contentTypeHeader: 'application/json',
+  //       HttpHeaders.acceptHeader: 'application/json'
+  //     }));
   Future<UserCreate>? _futureUser;
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _tagController = TextEditingController();
+  final TextEditingController _dateStartController = TextEditingController();
+  final TextEditingController _dateEndController = TextEditingController();
+  final TextEditingController _priorityController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -91,9 +93,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                 border: OutlineInputBorder(
                                     borderSide: BorderSide(
                                         color:
-                                            Color.fromRGBO(233, 241, 255, 1)),
+                                        Color.fromRGBO(233, 241, 255, 1)),
                                     borderRadius:
-                                        BorderRadius.all(Radius.circular(15)))),
+                                    BorderRadius.all(Radius.circular(15)))),
                             controller: _nameController,
                             validator: (String? value) {
                               if (value == null || value.isEmpty) {
@@ -111,10 +113,10 @@ class _RegisterPageState extends State<RegisterPage> {
                                 border: OutlineInputBorder(
                                     borderSide: BorderSide(
                                         color:
-                                            Color.fromRGBO(233, 241, 255, 1)),
+                                        Color.fromRGBO(233, 241, 255, 1)),
                                     borderRadius:
-                                        BorderRadius.all(Radius.circular(15)))),
-                            controller: _emailController,
+                                    BorderRadius.all(Radius.circular(15)))),
+                            controller: _descriptionController,
                             validator: (String? value) {
                               if (value == null || value.isEmpty) {
                                 return 'Input email';
@@ -132,10 +134,10 @@ class _RegisterPageState extends State<RegisterPage> {
                                 border: OutlineInputBorder(
                                     borderSide: BorderSide(
                                         color:
-                                            Color.fromRGBO(233, 241, 255, 1)),
+                                        Color.fromRGBO(233, 241, 255, 1)),
                                     borderRadius:
-                                        BorderRadius.all(Radius.circular(15)))),
-                            controller: _passwordController,
+                                    BorderRadius.all(Radius.circular(15)))),
+                            controller: _tagController,
                             validator: (String? value) {
                               if (value == null || value.isEmpty) {
                                 return 'Input password';
@@ -149,17 +151,17 @@ class _RegisterPageState extends State<RegisterPage> {
                             height: 60,
                             decoration: const BoxDecoration(
                               borderRadius:
-                                  BorderRadius.all(Radius.circular(15)),
+                              BorderRadius.all(Radius.circular(15)),
                             ),
                             child: ElevatedButton(
                               style: const ButtonStyle(
                                   shape: WidgetStatePropertyAll(
                                       RoundedRectangleBorder(
-                                    borderRadius:
+                                        borderRadius:
                                         BorderRadius.all(Radius.circular(15)),
-                                  )),
+                                      )),
                                   foregroundColor:
-                                      WidgetStatePropertyAll(Colors.white),
+                                  WidgetStatePropertyAll(Colors.white),
                                   backgroundColor: WidgetStatePropertyAll(
                                       Color.fromRGBO(117, 110, 243, 1))),
                               onPressed: () {
@@ -167,8 +169,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                   try {
                                     _futureUser = createUser(
                                         _nameController.text,
-                                        _emailController.text,
-                                        _passwordController.text);
+                                        _descriptionController.text,
+                                        _tagController.text);
                                     showDialog(
                                         context: context,
                                         builder: (BuildContext context) {
@@ -176,7 +178,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                             title: const Text('Success'),
                                             content: Padding(
                                                 padding:
-                                                    const EdgeInsets.all(10.0),
+                                                const EdgeInsets.all(10.0),
                                                 child: Column(
                                                   children: [
                                                     const Text(
@@ -189,12 +191,12 @@ class _RegisterPageState extends State<RegisterPage> {
                                                             context,
                                                             MaterialPageRoute(
                                                                 builder: (context) =>
-                                                                    const LoginPage(
-                                                                        title:
-                                                                            'Flutter Demo Home Page')));
+                                                                const LoginPage(
+                                                                    title:
+                                                                    'Flutter Demo Home Page')));
                                                       },
                                                       child:
-                                                          const Text('Return'),
+                                                      const Text('Return'),
                                                     ),
                                                   ],
                                                 )),
@@ -208,7 +210,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                             title: const Text('Error'),
                                             content: Padding(
                                                 padding:
-                                                    const EdgeInsets.all(10.0),
+                                                const EdgeInsets.all(10.0),
                                                 child: Column(
                                                   children: [
                                                     const Text(
@@ -218,7 +220,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                                         Navigator.pop(context);
                                                       },
                                                       child:
-                                                          const Text('Return'),
+                                                      const Text('Return'),
                                                     ),
                                                   ],
                                                 )),
@@ -240,26 +242,26 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 40),
                     RichText(
                         text: TextSpan(children: [
-                      const TextSpan(
-                          text: 'Already have an account? ',
-                          style: TextStyle(
-                              color: Color.fromRGBO(141, 141, 141, 1),
-                              fontSize: 16)),
-                      TextSpan(
-                          text: 'Sign In',
-                          style: const TextStyle(
-                              color: Color.fromRGBO(117, 110, 243, 1),
-                              fontSize: 16),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              // Navigator.pop(context);
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
+                          const TextSpan(
+                              text: 'Already have an account? ',
+                              style: TextStyle(
+                                  color: Color.fromRGBO(141, 141, 141, 1),
+                                  fontSize: 16)),
+                          TextSpan(
+                              text: 'Sign In',
+                              style: const TextStyle(
+                                  color: Color.fromRGBO(117, 110, 243, 1),
+                                  fontSize: 16),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  // Navigator.pop(context);
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
                                           const LoginPage(title: 'Sign In')));
-                            })
-                    ]))
+                                })
+                        ]))
                   ]))
             ],
           ),
@@ -279,6 +281,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<UserCreate> createUser(
       String name, String email, String password) async {
     User user = User(name, email, password);
+    Dio dio = Dio();
     Response<dynamic> response;
     try {
       response = await dio.post('/register', data: user);
