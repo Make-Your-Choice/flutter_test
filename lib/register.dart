@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import 'login.dart';
-import 'model/user.dart';
-import 'model/user_create.dart';
+import 'model/user/user.dart';
+import 'model/user create/user_create.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key, required this.title});
@@ -37,11 +37,12 @@ class _RegisterPageState extends State<RegisterPage> {
         title: Text(widget.title),
       ),
       body: Center(
-          child: (_futureUser == null) ? buildColumn() : buildFutureBuilder()),
+          child: buildBody()
+      ),
     );
   }
 
-  SizedBox buildColumn() {
+  SizedBox buildBody() {
     return SizedBox(
       height: MediaQuery.of(context).size.height,
       child: Stack(
@@ -183,15 +184,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                                         'Registration success'),
                                                     ElevatedButton(
                                                       onPressed: () {
-                                                        Navigator.pop(context);
-                                                        Navigator.pop(context);
-                                                        Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                    const LoginPage(
-                                                                        title:
-                                                                            'Flutter Demo Home Page')));
+                                                        context.go('/sign-in');
                                                       },
                                                       child:
                                                           const Text('Return'),
@@ -215,7 +208,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                                         'Registration failed'),
                                                     ElevatedButton(
                                                       onPressed: () {
-                                                        Navigator.pop(context);
+                                                        context.go('/sign-up');
                                                       },
                                                       child:
                                                           const Text('Return'),
@@ -252,12 +245,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               fontSize: 16),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
-                              // Navigator.pop(context);
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const LoginPage(title: 'Sign In')));
+                            context.go('/sign-in');
                             })
                     ]))
                   ]))
@@ -310,18 +298,18 @@ class _RegisterPageState extends State<RegisterPage> {
   //   }
   // }
 
-  FutureBuilder<UserCreate> buildFutureBuilder() {
-    return FutureBuilder<UserCreate>(
-      future: _futureUser,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return Text(snapshot.data!.name);
-        } else if (snapshot.hasError) {
-          return Text('${snapshot.error}');
-        }
-
-        return const CircularProgressIndicator();
-      },
-    );
-  }
+  // FutureBuilder<UserCreate> buildFutureBuilder() {
+  //   return FutureBuilder<UserCreate>(
+  //     future: _futureUser,
+  //     builder: (context, snapshot) {
+  //       if (snapshot.hasData) {
+  //         return Text(snapshot.data!.name);
+  //       } else if (snapshot.hasError) {
+  //         return Text('${snapshot.error}');
+  //       }
+  //
+  //       return const CircularProgressIndicator();
+  //     },
+  //   );
+  // }
 }

@@ -4,12 +4,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
-import 'package:project1/register.dart';
-import 'package:project1/tasks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'model/token.dart';
-import 'model/user_login.dart';
+import 'model/token/token.dart';
+import 'model/user login/user_login.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.title});
@@ -22,7 +23,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  // late Box<Token> tokenBox;
+  late Box<Token> tokenBox;
   final dio = Dio(
       BaseOptions(baseUrl: 'https://test-mobile.estesis.tech/api/v1', headers: {
     HttpHeaders.contentTypeHeader: 'application/x-www-form-urlencoded',
@@ -32,12 +33,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   tokenBox = Hive.box<Token>('tokenBox');
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,11 +41,12 @@ class _LoginPageState extends State<LoginPage> {
         title: Text(widget.title),
       ),
       body: Center(
-          child: (_futureToken == null) ? buildColumn() : buildFutureBuilder()),
+          child: buildBody(),
+      )
     );
   }
 
-  SizedBox buildColumn() {
+  SizedBox buildBody() {
     return SizedBox(
       height: MediaQuery.of(context).size.height,
       child: Stack(
@@ -158,13 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                                     _futureToken = getToken(
                                         _emailController.text,
                                         _passwordController.text);
-                                    Navigator.pop(context);
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                const TasksPage(
-                                                    title: 'My tasks')));
+                                    context.go('/tasks');
                                   } catch (e) {
                                     showDialog(
                                         context: context,
@@ -180,7 +170,7 @@ class _LoginPageState extends State<LoginPage> {
                                                         'Registration failed'),
                                                     ElevatedButton(
                                                       onPressed: () {
-                                                        Navigator.pop(context);
+                                                        context.go('/sign-in');
                                                       },
                                                       child:
                                                           const Text('Return'),
@@ -217,12 +207,7 @@ class _LoginPageState extends State<LoginPage> {
                               fontSize: 16),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
-                              // Navigator.pop(context);
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => const RegisterPage(
-                                          title: 'Sign Up')));
+                              context.go('/sign-up');
                             })
                     ]))
                   ]))
@@ -250,8 +235,6 @@ class _LoginPageState extends State<LoginPage> {
         FlutterSecureStorage storage = const FlutterSecureStorage();
         String accessToken = Token.fromJson(response.data).accessToken;
         storage.write(key: 'access_token', value: accessToken);
-        // tokenBox.put('current_token', Token.fromJson(response.data));
-        // Hive.box<Token>('tokenBox').put('current_token', Token.fromJson(response.data));
         return Token.fromJson(response.data);
       } else {
         throw Exception('Login error!');
@@ -261,18 +244,18 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  FutureBuilder<Token> buildFutureBuilder() {
-    return FutureBuilder<Token>(
-      future: _futureToken,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return Text(snapshot.data!.accessToken);
-        } else if (snapshot.hasError) {
-          return Text('${snapshot.error}');
-        }
-
-        return const CircularProgressIndicator();
-      },
-    );
-  }
+// FutureBuilder<Token> buildFutureBuilder() {
+//   return FutureBuilder<Token>(
+//     future: _futureToken,
+//     builder: (context, snapshot) {
+//       if (snapshot.hasData) {
+//         return Text(snapshot.data!.accessToken);
+//       } else if (snapshot.hasError) {
+//         return Text('${snapshot.error}');
+//       }
+//
+//       return const CircularProgressIndicator();
+//     },
+//   );
+// }
 }

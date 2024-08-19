@@ -6,17 +6,17 @@ part of 'task.dart';
 // TypeAdapterGenerator
 // **************************************************************************
 
-class TaskAdapter extends TypeAdapter<Task> {
+class TaskDataAdapter extends TypeAdapter<TaskData> {
   @override
   final int typeId = 0;
 
   @override
-  Task read(BinaryReader reader) {
+  TaskData read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Task(
+    return TaskData(
       fields[0] as String,
       fields[1] as String,
       fields[2] as String,
@@ -29,7 +29,7 @@ class TaskAdapter extends TypeAdapter<Task> {
   }
 
   @override
-  void write(BinaryWriter writer, Task obj) {
+  void write(BinaryWriter writer, TaskData obj) {
     writer
       ..writeByte(8)
       ..writeByte(0)
@@ -56,7 +56,7 @@ class TaskAdapter extends TypeAdapter<Task> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TaskAdapter &&
+      other is TaskDataAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
@@ -109,7 +109,7 @@ class PriorityAdapter extends TypeAdapter<Priority> {
 // JsonSerializableGenerator
 // **************************************************************************
 
-Task _$TaskFromJson(Map<String, dynamic> json) => Task(
+TaskData _$TaskDataFromJson(Map<String, dynamic> json) => TaskData(
       json['sid'] as String,
       json['title'] as String,
       json['text'] as String,
@@ -122,7 +122,7 @@ Task _$TaskFromJson(Map<String, dynamic> json) => Task(
           : DateTime.parse(json['finishAt'] as String),
     );
 
-Map<String, dynamic> _$TaskToJson(Task instance) => <String, dynamic>{
+Map<String, dynamic> _$TaskDataToJson(TaskData instance) => <String, dynamic>{
       'sid': instance.sid,
       'title': instance.title,
       'text': instance.text,

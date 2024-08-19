@@ -1,11 +1,13 @@
-
 import 'package:dio/dio.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
 
 import 'login.dart';
-import 'model/user.dart';
-import 'model/user_create.dart';
+import 'model/tag/tag.dart';
+import 'model/user/user.dart';
+import 'model/user create/user_create.dart';
 
 class AddTaskPage extends StatefulWidget {
   const AddTaskPage({super.key, required this.title});
@@ -18,18 +20,22 @@ class AddTaskPage extends StatefulWidget {
 
 class _AddTaskPageState extends State<AddTaskPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   // final dio = Dio(
   //     BaseOptions(baseUrl: 'https://test-mobile.estesis.tech/api/v1', headers: {
   //       HttpHeaders.contentTypeHeader: 'application/json',
   //       HttpHeaders.acceptHeader: 'application/json'
   //     }));
   Future<UserCreate>? _futureUser;
+  Box<Tag> tagBox = Hive.box<Tag>('tagBox');
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _tagController = TextEditingController();
   final TextEditingController _dateStartController = TextEditingController();
+  final TextEditingController _timeStartController = TextEditingController();
   final TextEditingController _dateEndController = TextEditingController();
   final TextEditingController _priorityController = TextEditingController();
+  late bool _deadlineCheck = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +43,14 @@ class _AddTaskPageState extends State<AddTaskPage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(widget.title),
+        leading: IconButton(
+            onPressed: () => {
+                  context.go('/tasks')
+                },
+            icon: const Icon(
+              Icons.arrow_back_ios,
+              size: 30,
+            )),
       ),
       body: Center(
           child: (_futureUser == null) ? buildColumn() : buildFutureBuilder()),
@@ -46,233 +60,231 @@ class _AddTaskPageState extends State<AddTaskPage> {
   SizedBox buildColumn() {
     return SizedBox(
       height: MediaQuery.of(context).size.height,
-      child: Stack(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Create an account',
-                              style: TextStyle(
-                                  fontSize: 25, fontWeight: FontWeight.w700),
-                            ),
-                            SizedBox(height: 10),
-                            Text(
-                              'Fill all the fields',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                color: Color.fromRGBO(141, 141, 141, 1),
-                              ),
-                            ),
-                            SizedBox(height: 60),
-                          ],
-                        )
-                      ],
-                    ),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+          Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(children: [
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextFormField(
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 20.0, horizontal: 10.0),
+                            hintText: 'Title',
+                            border: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Color.fromRGBO(233, 241, 255, 1)),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(15)))),
+                        controller: _nameController,
+                        validator: (String? value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Input title';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 40),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 20.0, horizontal: 10.0),
+                            hintText: 'Description',
+                            border: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Color.fromRGBO(233, 241, 255, 1)),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(15)))),
+                        controller: _descriptionController,
+                        // validator: (String? value) {
+                        //   if (value == null || value.isEmpty) {
+                        //     return 'Input email';
+                        //   }
+                        //   return null;
+                        // },
+                      ),
+                      const SizedBox(height: 40),
+                      DropdownMenu<String>(
+                        hintText: 'Tag',
+                        controller: _tagController,
+                        dropdownMenuEntries: dropdownItems(),
+                      ),
+                      const SizedBox(height: 40),
+                      Row(
                         children: [
-                          TextFormField(
-                            decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(
-                                    vertical: 20.0, horizontal: 10.0),
-                                hintText: 'Name',
-                                border: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color:
-                                        Color.fromRGBO(233, 241, 255, 1)),
-                                    borderRadius:
-                                    BorderRadius.all(Radius.circular(15)))),
-                            controller: _nameController,
-                            validator: (String? value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Input name';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 40),
-                          TextFormField(
-                            decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(
-                                    vertical: 20.0, horizontal: 10.0),
-                                hintText: 'Email',
-                                border: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color:
-                                        Color.fromRGBO(233, 241, 255, 1)),
-                                    borderRadius:
-                                    BorderRadius.all(Radius.circular(15)))),
-                            controller: _descriptionController,
-                            validator: (String? value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Input email';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 40),
-                          TextFormField(
-                            obscureText: true,
-                            decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(
-                                    vertical: 20.0, horizontal: 10.0),
-                                hintText: 'Password',
-                                border: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color:
-                                        Color.fromRGBO(233, 241, 255, 1)),
-                                    borderRadius:
-                                    BorderRadius.all(Radius.circular(15)))),
-                            controller: _tagController,
-                            validator: (String? value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Input password';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 40),
-                          Container(
-                            width: double.infinity,
-                            height: 60,
-                            decoration: const BoxDecoration(
-                              borderRadius:
-                              BorderRadius.all(Radius.circular(15)),
-                            ),
-                            child: ElevatedButton(
-                              style: const ButtonStyle(
-                                  shape: WidgetStatePropertyAll(
-                                      RoundedRectangleBorder(
-                                        borderRadius:
-                                        BorderRadius.all(Radius.circular(15)),
-                                      )),
-                                  foregroundColor:
-                                  WidgetStatePropertyAll(Colors.white),
-                                  backgroundColor: WidgetStatePropertyAll(
-                                      Color.fromRGBO(117, 110, 243, 1))),
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  try {
-                                    _futureUser = createUser(
-                                        _nameController.text,
-                                        _descriptionController.text,
-                                        _tagController.text);
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: const Text('Success'),
-                                            content: Padding(
-                                                padding:
-                                                const EdgeInsets.all(10.0),
-                                                child: Column(
-                                                  children: [
-                                                    const Text(
-                                                        'Registration success'),
-                                                    ElevatedButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                        Navigator.pop(context);
-                                                        Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                const LoginPage(
-                                                                    title:
-                                                                    'Flutter Demo Home Page')));
-                                                      },
-                                                      child:
-                                                      const Text('Return'),
-                                                    ),
-                                                  ],
-                                                )),
-                                          );
-                                        });
-                                  } catch (e) {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: const Text('Error'),
-                                            content: Padding(
-                                                padding:
-                                                const EdgeInsets.all(10.0),
-                                                child: Column(
-                                                  children: [
-                                                    const Text(
-                                                        'Registration failed'),
-                                                    ElevatedButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                      },
-                                                      child:
-                                                      const Text('Return'),
-                                                    ),
-                                                  ],
-                                                )),
-                                          );
-                                        });
-                                  }
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width / 2 - 20,
+                            child: TextFormField(
+                              readOnly: true,
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.symmetric(
+                                      vertical: 20.0, horizontal: 10.0),
+                                  hintText: 'Date',
+                                  border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color:
+                                              Color.fromRGBO(233, 241, 255, 1)),
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(15)))),
+                              controller: _dateStartController,
+                              onTap: () async {
+                                DateTime? pickedDate = await showDatePicker(
+                                    context: context,
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime(3000),
+                                    initialDate: DateTime.now());
+                                if (pickedDate != null) {
+                                  String formattedDate =
+                                      DateFormat('dd/MM/yyyy')
+                                          .format(pickedDate);
+                                  setState(() {
+                                    _dateStartController.text = formattedDate;
+                                  });
                                 }
                               },
-                              child: const Text(
-                                'Sign Up',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w400, fontSize: 20),
-                              ),
                             ),
-                          )
+                          ),
+                          const SizedBox(
+                            width: 20,
+                          ),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width / 2 - 40,
+                            child: TextFormField(
+                              readOnly: true,
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.symmetric(
+                                      vertical: 20.0, horizontal: 10.0),
+                                  hintText: 'Time',
+                                  border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color:
+                                              Color.fromRGBO(233, 241, 255, 1)),
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(15)))),
+                              controller: _timeStartController,
+                              onTap: () async {
+                                TimeOfDay? pickedTime = await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay.now());
+                                if (pickedTime != null) {
+                                  String formattedDate =
+                                      pickedTime.format(context);
+                                  setState(() {
+                                    _timeStartController.text = formattedDate;
+                                  });
+                                }
+                              },
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 40),
-                    RichText(
-                        text: TextSpan(children: [
-                          const TextSpan(
-                              text: 'Already have an account? ',
-                              style: TextStyle(
-                                  color: Color.fromRGBO(141, 141, 141, 1),
-                                  fontSize: 16)),
-                          TextSpan(
-                              text: 'Sign In',
-                              style: const TextStyle(
-                                  color: Color.fromRGBO(117, 110, 243, 1),
-                                  fontSize: 16),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  // Navigator.pop(context);
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                          const LoginPage(title: 'Sign In')));
-                                })
-                        ]))
-                  ]))
-            ],
-          ),
-          Positioned(
-            top: 0,
-            right: 20,
-            child: Image.asset(
-              'assets/images/dots2.png',
-              fit: BoxFit.fitHeight,
-            ),
-          )
+                      Row(
+                        children: [
+                          Checkbox(
+                              value: _deadlineCheck,
+                              onChanged: (bool? newValue) {
+                                setState(() {
+                                  _deadlineCheck = newValue!;
+                                });
+                              }),
+                          const Text('Deadline?')
+                        ],
+                      ),
+                      const SizedBox(height: 40),
+                      Container(
+                        width: double.infinity,
+                        height: 60,
+                        decoration: const BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(15)),
+                        ),
+                        child: ElevatedButton(
+                          style: const ButtonStyle(
+                              shape:
+                                  WidgetStatePropertyAll(RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(15)),
+                              )),
+                              foregroundColor:
+                                  WidgetStatePropertyAll(Colors.white),
+                              backgroundColor: WidgetStatePropertyAll(
+                                  Color.fromRGBO(117, 110, 243, 1))),
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              try {
+                                _futureUser = createUser(
+                                    _nameController.text,
+                                    _descriptionController.text,
+                                    _tagController.text);
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text('Success'),
+                                        content: Padding(
+                                            padding: const EdgeInsets.all(10.0),
+                                            child: Column(
+                                              children: [
+                                                const Text(
+                                                    'Registration success'),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                    Navigator.pop(context);
+                                                    Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                const LoginPage(
+                                                                    title:
+                                                                        'Flutter Demo Home Page')));
+                                                  },
+                                                  child: const Text('Return'),
+                                                ),
+                                              ],
+                                            )),
+                                      );
+                                    });
+                              } catch (e) {
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text('Error'),
+                                        content: Padding(
+                                            padding: const EdgeInsets.all(10.0),
+                                            child: Column(
+                                              children: [
+                                                const Text(
+                                                    'Registration failed'),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: const Text('Return'),
+                                                ),
+                                              ],
+                                            )),
+                                      );
+                                    });
+                              }
+                            }
+                          },
+                          child: const Text(
+                            'Sign Up',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w400, fontSize: 20),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ]))
         ],
       ),
     );
@@ -326,5 +338,14 @@ class _AddTaskPageState extends State<AddTaskPage> {
         return const CircularProgressIndicator();
       },
     );
+  }
+
+  List<DropdownMenuEntry<String>> dropdownItems() {
+    List<DropdownMenuEntry<String>> menuItems = [];
+    List<Tag> tagList = tagBox.values.toList();
+    for (var i in tagList) {
+      menuItems.add(DropdownMenuEntry(value: i.sid, label: i.name));
+    }
+    return menuItems;
   }
 }
