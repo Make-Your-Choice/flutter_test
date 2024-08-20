@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:project1/router/router.dart';
 
-import 'init.dart';
+import 'service/init.dart';
 
 void main() async {
   init();

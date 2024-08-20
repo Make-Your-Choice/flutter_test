@@ -23,7 +23,7 @@ class TaskData {
   bool isDone;
 
   @HiveField(5)
-  Tag tag;
+  TagData tag;
 
   @HiveField(6)
   DateTime createdAt;
@@ -31,9 +31,12 @@ class TaskData {
   @HiveField(7)
   Priority priority;
 
+  @JsonKey(ignore: true)
+  bool? isSynchronized;
+
   TaskData(this.sid, this.title, this.text, this.isDone, this.tag,
       this.createdAt,
-      [this.priority = Priority.LOW, this.finishAt]);
+      [this.priority = Priority.LOW, this.finishAt, this.isSynchronized = true]);
 
   factory TaskData.fromJson(Map<String, dynamic> json) => _$TaskDataFromJson(json);
 

@@ -3,33 +3,24 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:project1/api/api_service.dart';
 
-import 'model/token/token.dart';
-import 'model/user login/user_login.dart';
+import '../model/user/user.dart';
+import '../model/user create/user_create.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required this.title});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  late Box<Token> tokenBox;
-  final dio = Dio(
-      BaseOptions(baseUrl: 'https://test-mobile.estesis.tech/api/v1', headers: {
-    HttpHeaders.contentTypeHeader: 'application/x-www-form-urlencoded',
-    HttpHeaders.acceptHeader: 'application/json'
-  }));
-  Future<Token>? _futureToken;
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -41,8 +32,8 @@ class _LoginPageState extends State<LoginPage> {
         title: Text(widget.title),
       ),
       body: Center(
-          child: buildBody(),
-      )
+          child: buildBody()
+      ),
     );
   }
 
@@ -65,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Welcome',
+                              'Create an account',
                               style: TextStyle(
                                   fontSize: 25, fontWeight: FontWeight.w700),
                             ),
@@ -88,6 +79,25 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          TextFormField(
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 20.0, horizontal: 10.0),
+                                hintText: 'Name',
+                                border: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color:
+                                            Color.fromRGBO(233, 241, 255, 1)),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(15)))),
+                            controller: _nameController,
+                            validator: (String? value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Input name';
+                              }
+                              return null;
+                            },
+                          ),
                           const SizedBox(height: 40),
                           TextFormField(
                             decoration: const InputDecoration(
@@ -148,13 +158,37 @@ class _LoginPageState extends State<LoginPage> {
                                       WidgetStatePropertyAll(Colors.white),
                                   backgroundColor: WidgetStatePropertyAll(
                                       Color.fromRGBO(117, 110, 243, 1))),
-                              onPressed: () {
+                              onPressed: () async {
                                 if (_formKey.currentState!.validate()) {
                                   try {
-                                    _futureToken = getToken(
+                                    var service = await ApiService.create();
+                                    service.postUser(
+                                        _nameController.text,
                                         _emailController.text,
                                         _passwordController.text);
-                                    context.go('/tasks');
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: const Text('Success'),
+                                            content: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(10.0),
+                                                child: Column(
+                                                  children: [
+                                                    const Text(
+                                                        'Registration success'),
+                                                    ElevatedButton(
+                                                      onPressed: () {
+                                                        context.go('/sign-in');
+                                                      },
+                                                      child:
+                                                          const Text('Return'),
+                                                    ),
+                                                  ],
+                                                )),
+                                          );
+                                        });
                                   } catch (e) {
                                     showDialog(
                                         context: context,
@@ -170,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
                                                         'Registration failed'),
                                                     ElevatedButton(
                                                       onPressed: () {
-                                                        context.go('/sign-in');
+                                                        context.go('/sign-up');
                                                       },
                                                       child:
                                                           const Text('Return'),
@@ -183,7 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                                 }
                               },
                               child: const Text(
-                                'Sign In',
+                                'Sign Up',
                                 style: TextStyle(
                                     fontWeight: FontWeight.w400, fontSize: 20),
                               ),
@@ -196,18 +230,18 @@ class _LoginPageState extends State<LoginPage> {
                     RichText(
                         text: TextSpan(children: [
                       const TextSpan(
-                          text: 'Don\'t have an account? ',
+                          text: 'Already have an account? ',
                           style: TextStyle(
                               color: Color.fromRGBO(141, 141, 141, 1),
                               fontSize: 16)),
                       TextSpan(
-                          text: 'Sign Up',
+                          text: 'Sign In',
                           style: const TextStyle(
                               color: Color.fromRGBO(117, 110, 243, 1),
                               fontSize: 16),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
-                              context.go('/sign-up');
+                            context.go('/sign-in');
                             })
                     ]))
                   ]))
@@ -217,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
             top: 0,
             right: 20,
             child: Image.asset(
-              'assets/images/dots1.png',
+              'assets/images/dots2.png',
               fit: BoxFit.fitHeight,
             ),
           )
@@ -226,36 +260,52 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Future<Token> getToken(String email, String password) async {
-    UserLogin userLogin = UserLogin(email, password);
-    Response<dynamic> response;
-    try {
-      response = await dio.post('/login', data: userLogin.toJson());
-      if (response.statusCode == 200) {
-        FlutterSecureStorage storage = const FlutterSecureStorage();
-        String accessToken = Token.fromJson(response.data).accessToken;
-        storage.write(key: 'access_token', value: accessToken);
-        return Token.fromJson(response.data);
-      } else {
-        throw Exception('Login error!');
-      }
-    } catch (e) {
-      rethrow;
-    }
-  }
+  // Future<UserCreate> createUser(
+  //     String name, String email, String password) async {
+  //   User user = User(name, email, password);
+  //   Response<dynamic> response;
+  //   try {
+  //     response = await dio.post('/register', data: user);
+  //     if (response.statusCode == 200) {
+  //       return UserCreate.fromJson(response.data);
+  //     } else {
+  //       throw Exception('Registration error!');
+  //     }
+  //   } catch (e) {
+  //     rethrow;
+  //   }
+  // }
 
-// FutureBuilder<Token> buildFutureBuilder() {
-//   return FutureBuilder<Token>(
-//     future: _futureToken,
-//     builder: (context, snapshot) {
-//       if (snapshot.hasData) {
-//         return Text(snapshot.data!.accessToken);
-//       } else if (snapshot.hasError) {
-//         return Text('${snapshot.error}');
-//       }
-//
-//       return const CircularProgressIndicator();
-//     },
-//   );
-// }
+  // Future<UserCreate> createUser (String name, String email, String password) async {
+  //   UserCreate userCreate = UserCreate(name, email, password);
+  //   final response = await post(
+  //       Uri.parse('https://test-mobile.estesis.tech/api/v1/register'),
+  //       headers: <String, String> {
+  //         'Content-Type':'application/json',
+  //         'accept' : 'application/json'
+  //       },
+  //     body: jsonEncode(userCreate.toJson())
+  //   );
+  //   if (response.statusCode == 200) {
+  //     return UserCreate.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  //   } else {
+  //     print(response);
+  //     throw Exception('Ошибка регистрации!');
+  //   }
+  // }
+
+  // FutureBuilder<UserCreate> buildFutureBuilder() {
+  //   return FutureBuilder<UserCreate>(
+  //     future: _futureUser,
+  //     builder: (context, snapshot) {
+  //       if (snapshot.hasData) {
+  //         return Text(snapshot.data!.name);
+  //       } else if (snapshot.hasError) {
+  //         return Text('${snapshot.error}');
+  //       }
+  //
+  //       return const CircularProgressIndicator();
+  //     },
+  //   );
+  // }
 }

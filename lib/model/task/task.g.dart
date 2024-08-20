@@ -21,7 +21,7 @@ class TaskDataAdapter extends TypeAdapter<TaskData> {
       fields[1] as String,
       fields[2] as String,
       fields[4] as bool,
-      fields[5] as Tag,
+      fields[5] as TagData,
       fields[6] as DateTime,
       fields[7] as Priority,
       fields[3] as DateTime?,
@@ -114,7 +114,7 @@ TaskData _$TaskDataFromJson(Map<String, dynamic> json) => TaskData(
       json['title'] as String,
       json['text'] as String,
       json['isDone'] as bool,
-      Tag.fromJson(json['tag'] as Map<String, dynamic>),
+      TagData.fromJson(json['tag'] as Map<String, dynamic>),
       DateTime.parse(json['createdAt'] as String),
       $enumDecodeNullable(_$PriorityEnumMap, json['priority']) ?? Priority.LOW,
       json['finishAt'] == null

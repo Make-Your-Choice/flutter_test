@@ -5,16 +5,16 @@ part 'tag.g.dart';
 
 @JsonSerializable()
 @HiveType(typeId: 1)
-class Tag {
+class TagData {
   @HiveField(0)
   String sid;
 
   @HiveField(1)
   String name;
 
-  Tag(this.sid, this.name);
+  TagData(this.sid, this.name);
 
-  factory Tag.fromJson(Map<String, dynamic> json) => _$TagFromJson(json);
+  factory TagData.fromJson(Map<String, dynamic> json) => _$TagDataFromJson(json);
 
-  Map<String, dynamic> toJson() => _$TagToJson(this);
+  Map<String, dynamic> toJson() => _$TagDataToJson(this);
 }
