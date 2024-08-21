@@ -2,6 +2,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:project1/model/tag/tag.dart';
 
+import '../priority/priority.dart';
 import '../task/task.dart';
 
 part 'task_put.g.dart';

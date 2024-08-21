@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:project1/state/provider.dart';
+import 'package:project1/api/provider.dart';
 
 import '../model/tag/tag.dart';
 import '../model/task put/task_put.dart';
@@ -125,7 +125,7 @@ class TasksPage extends ConsumerWidget {
                                         ),
                                       ])),
                                       Slidable(
-                                        key: Key(data.elementAt(listIndex).sid),
+                                        key: Key(data.elementAt(listIndex).sid!),
                                         direction: Axis.horizontal,
                                         startActionPane: ActionPane(
                                             motion: const BehindMotion(),
@@ -138,13 +138,13 @@ class TasksPage extends ConsumerWidget {
                                                   icon: Icons.check,
                                                   onPressed: (context) {
                                                     TaskPutData upd = TaskPutData(
-                                                        data.elementAt(listIndex).sid,
+                                                        data.elementAt(listIndex).sid!,
                                                         data.elementAt(listIndex).title,
                                                         data.elementAt(listIndex).text,
                                                         data.elementAt(listIndex).isDone,
                                                         data.elementAt(listIndex).tag.sid);
                                                     upd.isDone = true;
-                                                    ref.read(taskProvider.notifier).completeTask(upd);
+                                                    ref.watch(taskProvider.notifier).completeTask(upd);
                                                   }),
                                             ]),
                                         endActionPane: ActionPane(
@@ -262,7 +262,7 @@ class TasksPage extends ConsumerWidget {
                                                                     .format(data
                                                                         .elementAt(
                                                                             listIndex)
-                                                                        .createdAt),
+                                                                        .createdAt!),
                                                                 style: const TextStyle(
                                                                     color: Color
                                                                         .fromRGBO(

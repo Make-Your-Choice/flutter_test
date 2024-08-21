@@ -17,14 +17,14 @@ class TaskDataAdapter extends TypeAdapter<TaskData> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return TaskData(
-      fields[0] as String,
-      fields[1] as String,
-      fields[2] as String,
-      fields[4] as bool,
-      fields[5] as TagData,
-      fields[6] as DateTime,
-      fields[7] as Priority,
-      fields[3] as DateTime?,
+      sid: fields[0] as String?,
+      title: fields[1] as String,
+      text: fields[2] as String,
+      isDone: fields[4] as bool,
+      tag: fields[5] as TagData,
+      createdAt: fields[6] as DateTime?,
+      priority: fields[7] as Priority,
+      finishAt: fields[3] as DateTime?,
     );
   }
 
@@ -61,63 +61,22 @@ class TaskDataAdapter extends TypeAdapter<TaskData> {
           typeId == other.typeId;
 }
 
-class PriorityAdapter extends TypeAdapter<Priority> {
-  @override
-  final int typeId = 4;
-
-  @override
-  Priority read(BinaryReader reader) {
-    switch (reader.readByte()) {
-      case 0:
-        return Priority.HIGH;
-      case 1:
-        return Priority.MID;
-      case 2:
-        return Priority.LOW;
-      default:
-        return Priority.HIGH;
-    }
-  }
-
-  @override
-  void write(BinaryWriter writer, Priority obj) {
-    switch (obj) {
-      case Priority.HIGH:
-        writer.writeByte(0);
-        break;
-      case Priority.MID:
-        writer.writeByte(1);
-        break;
-      case Priority.LOW:
-        writer.writeByte(2);
-        break;
-    }
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is PriorityAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
-
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
 TaskData _$TaskDataFromJson(Map<String, dynamic> json) => TaskData(
-      json['sid'] as String,
-      json['title'] as String,
-      json['text'] as String,
-      json['isDone'] as bool,
-      TagData.fromJson(json['tag'] as Map<String, dynamic>),
-      DateTime.parse(json['createdAt'] as String),
-      $enumDecodeNullable(_$PriorityEnumMap, json['priority']) ?? Priority.LOW,
-      json['finishAt'] == null
+      sid: json['sid'] as String?,
+      title: json['title'] as String,
+      text: json['text'] as String,
+      isDone: json['isDone'] as bool,
+      tag: TagData.fromJson(json['tag'] as Map<String, dynamic>),
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+      priority: $enumDecodeNullable(_$PriorityEnumMap, json['priority']) ??
+          Priority.LOW,
+      finishAt: json['finishAt'] == null
           ? null
           : DateTime.parse(json['finishAt'] as String),
     );
@@ -129,7 +88,7 @@ Map<String, dynamic> _$TaskDataToJson(TaskData instance) => <String, dynamic>{
       'finishAt': instance.finishAt?.toIso8601String(),
       'isDone': instance.isDone,
       'tag': instance.tag,
-      'createdAt': instance.createdAt.toIso8601String(),
+      'createdAt': instance.createdAt?.toIso8601String(),
       'priority': _$PriorityEnumMap[instance.priority]!,
     };
 

@@ -1,25 +1,30 @@
 import 'package:dio/dio.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:project1/model/task%20post/task_post.dart';
+import 'package:project1/model/task/task.dart';
 
+import '../api/provider.dart';
 import 'login.dart';
+import '../model/priority/priority.dart';
 import '../model/tag/tag.dart';
 import '../model/user/user.dart';
 import '../model/user create/user_create.dart';
 
-class AddTaskPage extends StatefulWidget {
+class AddTaskPage extends ConsumerStatefulWidget {
   const AddTaskPage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<AddTaskPage> createState() => _AddTaskPageState();
+  ConsumerState<AddTaskPage> createState() => _AddTaskPageState();
 }
 
-class _AddTaskPageState extends State<AddTaskPage> {
+class _AddTaskPageState extends ConsumerState<AddTaskPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   // final dio = Dio(
@@ -27,7 +32,6 @@ class _AddTaskPageState extends State<AddTaskPage> {
   //       HttpHeaders.contentTypeHeader: 'application/json',
   //       HttpHeaders.acceptHeader: 'application/json'
   //     }));
-  Future<UserCreate>? _futureUser;
   Box<TagData> tagBox = Hive.box<TagData>('tagBox');
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -36,13 +40,22 @@ class _AddTaskPageState extends State<AddTaskPage> {
   final TextEditingController _timeStartController = TextEditingController();
   final TextEditingController _dateEndController = TextEditingController();
   final TextEditingController _timeEndController = TextEditingController();
-  final TextEditingController _priorityController = TextEditingController();
+  Priority _priorityController = Priority.LOW;
+  final List<bool> _selectedPriority = <bool>[false, false, true];
+  bool _deadlineCheck = false;
+  TagData _tagController = Hive.box<TagData>('tagBox').values.first;
 
   @override
   Widget build(BuildContext context) {
+    // bool _deadlineCheck = false;
+    List<(Priority, String)> priorityList = [
+      (Priority.HIGH, 'High'),
+      (Priority.MID, 'Medium'),
+      (Priority.LOW, 'Low')
+    ];
 
-    bool _deadlineCheck = false;
-    String? _tagController;
+    var taskData = ref.watch(taskProvider);
+    // int selectedPriority = 2;
 
     return Scaffold(
         appBar: AppBar(
@@ -101,16 +114,10 @@ class _AddTaskPageState extends State<AddTaskPage> {
                                       borderRadius: BorderRadius.all(
                                           Radius.circular(15)))),
                               controller: _descriptionController,
-                              // validator: (String? value) {
-                              //   if (value == null || value.isEmpty) {
-                              //     return 'Input email';
-                              //   }
-                              //   return null;
-                              // },
                             ),
                             const SizedBox(height: 40),
-                            DropdownButtonFormField<String>(
-                              value: _tagController,
+                            DropdownButtonFormField<TagData>(
+                                value: _tagController,
                                 decoration: const InputDecoration(
                                     contentPadding: EdgeInsets.symmetric(
                                         vertical: 20.0, horizontal: 10.0),
@@ -124,16 +131,9 @@ class _AddTaskPageState extends State<AddTaskPage> {
                                 hint: const Text('Tag'),
                                 items: dropdownItems,
                                 onChanged: (value) {
-                                  setState(() => _tagController = value);
+                                  setState(() => _tagController = value!);
                                 }),
                             const SizedBox(height: 40),
-                            // DropdownMenu<String>(
-                            //   hintText: 'Tag',
-                            //   controller: _tagController,
-                            //   dropdownMenuEntries: dropdownEntries(),
-                            //   width: MediaQuery.of(context).size.width,
-                            // ),
-                            // const SizedBox(height: 40),
                             Row(
                               children: [
                                 SizedBox(
@@ -242,15 +242,15 @@ class _AddTaskPageState extends State<AddTaskPage> {
                                     controller: _dateEndController,
                                     onTap: () async {
                                       DateTime? pickedDate =
-                                      await showDatePicker(
-                                          context: context,
-                                          firstDate: DateTime.now(),
-                                          lastDate: DateTime(3000),
-                                          initialDate: DateTime.now());
+                                          await showDatePicker(
+                                              context: context,
+                                              firstDate: DateTime.now(),
+                                              lastDate: DateTime(3000),
+                                              initialDate: DateTime.now());
                                       if (pickedDate != null) {
                                         String formattedDate =
-                                        DateFormat('dd/MM/yyyy')
-                                            .format(pickedDate);
+                                            DateFormat('dd/MM/yyyy')
+                                                .format(pickedDate);
                                         setState(() {
                                           _dateEndController.text =
                                               formattedDate;
@@ -280,12 +280,12 @@ class _AddTaskPageState extends State<AddTaskPage> {
                                     controller: _timeEndController,
                                     onTap: () async {
                                       TimeOfDay? pickedTime =
-                                      await showTimePicker(
-                                          context: context,
-                                          initialTime: TimeOfDay.now());
+                                          await showTimePicker(
+                                              context: context,
+                                              initialTime: TimeOfDay.now());
                                       if (pickedTime != null) {
                                         String formattedDate =
-                                        pickedTime.format(context);
+                                            pickedTime.format(context);
                                         setState(() {
                                           _timeEndController.text =
                                               formattedDate;
@@ -297,7 +297,79 @@ class _AddTaskPageState extends State<AddTaskPage> {
                               ],
                             ),
                             const SizedBox(height: 40),
-                            ////
+                            Row(
+                                children: priorityList
+                                    .map((item) => Padding(
+                                        padding: item.$1 == Priority.LOW
+                                            ? const EdgeInsets.all(0)
+                                            : const EdgeInsets.only(right: 20),
+                                        child: OutlinedButton(
+                                            style: ButtonStyle(
+                                                foregroundColor:
+                                                    const WidgetStatePropertyAll(
+                                                        Colors.black),
+                                                side: WidgetStatePropertyAll(BorderSide(
+                                                    width: 2,
+                                                    color: item.$1 ==
+                                                            _priorityController
+                                                        ? Theme.of(context)
+                                                            .primaryColor
+                                                        : Colors.black45)),
+                                                // backgroundColor: WidgetStatePropertyAll(
+                                                //   item.$1 == _priorityController ? Theme.of(context).primaryColor : Theme.of(context).canvasColor
+                                                // ),
+                                                maximumSize:
+                                                    WidgetStatePropertyAll(Size(
+                                                        MediaQuery.of(context)
+                                                                    .size
+                                                                    .width /
+                                                                3 -
+                                                            27,
+                                                        50)),
+                                                minimumSize: WidgetStatePropertyAll(
+                                                    Size(MediaQuery.of(context).size.width / 3 - 27, 50)),
+                                                // padding: const WidgetStatePropertyAll(
+                                                //   EdgeInsets.all(20)
+                                                // ),
+                                                shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
+                                            onPressed: () {
+                                              setState(() {
+                                                _priorityController = item.$1;
+                                              });
+                                            },
+                                            child: Text(
+                                              item.$2,
+                                              style:
+                                                  const TextStyle(fontSize: 16),
+                                            ))))
+                                    .toList()),
+                            // ToggleButtons(
+                            //     isSelected: _selectedPriority,
+                            //     onPressed: (int index) {
+                            //       setState(() {
+                            //         for(int i = 0; i < _selectedPriority.length; i++) {
+                            //           _selectedPriority[i] = i == index;
+                            //         }
+                            //       });
+                            //     },
+                            //     selectedBorderColor: Theme.of(context).primaryColor,
+                            //     selectedColor: Colors.black,
+                            //     fillColor: Theme.of(context).canvasColor,
+                            //     borderRadius: BorderRadius.circular(15),
+                            //     borderColor: Colors.black45,
+                            //     borderWidth: 2,
+                            //     constraints: BoxConstraints(
+                            //       minWidth: MediaQuery.of(context).size.width / 3 - 17,
+                            //       minHeight: 60.0
+                            //     ),
+                            //     children: priorityList
+                            //         .map(((Priority, String) item) =>
+                            //           Text(
+                            //             item.$2,
+                            //             style: const TextStyle(
+                            //             fontSize: 16
+                            //           ),))
+                            //         .toList()),
                             const SizedBox(height: 40),
                             Container(
                               width: double.infinity,
@@ -320,10 +392,33 @@ class _AddTaskPageState extends State<AddTaskPage> {
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
                                     try {
-                                      // _futureUser = createUser(
-                                      //     _nameController.text,
-                                      //     _descriptionController.text,
-                                      //     _tagController.text);
+                                      TaskPostData task = TaskPostData(
+                                          title: _nameController.text,
+                                          text: _descriptionController.text,
+                                          tagSid: _tagController.sid,
+                                          priority: _priorityController);
+                                      if(_dateEndController.text.isNotEmpty && _timeEndController.text.isNotEmpty) {
+                                        DateFormat formatDate =
+                                        DateFormat('dd/MM/yyyy');
+                                        DateFormat formatTime =
+                                        DateFormat('HH:mm');
+                                        DateTime dateEnd = formatDate
+                                            .parse(_dateEndController.text);
+                                        DateTime timeEnd = formatTime
+                                            .parse(_timeEndController.text);
+                                        DateTime dateTime = DateTime(
+                                            dateEnd.year,
+                                            dateEnd.month,
+                                            dateEnd.day,
+                                            timeEnd.hour,
+                                            timeEnd.minute);
+                                        task.finishAt = dateTime;
+                                      }
+                                      ref
+                                          .watch(taskProvider.notifier)
+                                          .createTask(task);
+                                      ref.refresh(taskProvider);
+                                      // ref.refresh(taskProvider);
                                       showDialog(
                                           context: context,
                                           builder: (BuildContext context) {
@@ -335,20 +430,21 @@ class _AddTaskPageState extends State<AddTaskPage> {
                                                   child: Column(
                                                     children: [
                                                       const Text(
-                                                          'Registration success'),
+                                                          'Added new task'),
                                                       ElevatedButton(
                                                         onPressed: () {
                                                           Navigator.pop(
                                                               context);
-                                                          Navigator.pop(
-                                                              context);
-                                                          Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder: (context) =>
-                                                                      const LoginPage(
-                                                                          title:
-                                                                              'Flutter Demo Home Page')));
+                                                          context.go('/tasks');
+                                                          // Navigator.pop(
+                                                          //     context);
+                                                          // Navigator.push(
+                                                          //     context,
+                                                          //     MaterialPageRoute(
+                                                          //         builder: (context) =>
+                                                          //             const LoginPage(
+                                                          //                 title:
+                                                          //                     'Flutter Demo Home Page')));
                                                         },
                                                         child: const Text(
                                                             'Return'),
@@ -369,7 +465,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                                                   child: Column(
                                                     children: [
                                                       const Text(
-                                                          'Registration failed'),
+                                                          'Task creation failed!'),
                                                       ElevatedButton(
                                                         onPressed: () {
                                                           Navigator.pop(
@@ -386,7 +482,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                                   }
                                 },
                                 child: const Text(
-                                  'Sign Up',
+                                  'Create',
                                   style: TextStyle(
                                       fontWeight: FontWeight.w400,
                                       fontSize: 20),
@@ -403,12 +499,12 @@ class _AddTaskPageState extends State<AddTaskPage> {
         ));
   }
 
-  List<DropdownMenuItem<String>> get dropdownItems {
-    List<DropdownMenuItem<String>> menuItems = [];
-    menuItems.add(const DropdownMenuItem(value: null, child: Text('-')));
+  List<DropdownMenuItem<TagData>> get dropdownItems {
+    List<DropdownMenuItem<TagData>> menuItems = [];
+    // menuItems.add(const DropdownMenuItem(value: null, child: Text('-')));
     List<TagData> tagList = tagBox.values.toList();
     for (var i in tagList) {
-      menuItems.add(DropdownMenuItem(value: i.sid, child: Text(i.name)));
+      menuItems.add(DropdownMenuItem(value: i, child: Text(i.name)));
     }
     return menuItems;
   }

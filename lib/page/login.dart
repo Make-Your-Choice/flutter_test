@@ -145,7 +145,10 @@ class _LoginPageState extends State<LoginPage> {
                                 if (_formKey.currentState!.validate()) {
                                   try {
                                     var service = await ApiService.create();
-                                    service.getToken(
+                                    // service.getToken(
+                                    //     _emailController.text,
+                                    //     _passwordController.text);
+                                    await service.getToken(
                                         _emailController.text,
                                         _passwordController.text);
                                     context.go('/tasks');
@@ -161,10 +164,11 @@ class _LoginPageState extends State<LoginPage> {
                                                 child: Column(
                                                   children: [
                                                     const Text(
-                                                        'Registration failed'),
+                                                        'Login failed'),
                                                     ElevatedButton(
                                                       onPressed: () {
-                                                        context.go('/sign-in');
+                                                        Navigator.pop(context);
+                                                        // context.go('/sign-in');
                                                       },
                                                       child:
                                                           const Text('Return'),

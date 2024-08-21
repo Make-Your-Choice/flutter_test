@@ -56,7 +56,7 @@ class HomePage extends StatelessWidget {
                         color: Color.fromRGBO(141, 141, 141, 1)),
                   ),
                   const SizedBox(
-                    height: 80,
+                    height: 70,
                   ),
                   GestureDetector(
                     onTap: () {

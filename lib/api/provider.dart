@@ -8,6 +8,7 @@ import 'package:project1/model/task%20put/task_put.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../model/tag/tag.dart';
+import '../model/task post/task_post.dart';
 import '../model/task/task.dart';
 import '../model/token/token.dart';
 import '../model/user login/user_login.dart';
@@ -17,21 +18,28 @@ part 'provider.g.dart';
 
 @Riverpod()
 class Task extends _$Task {
+  late ApiService service;
   @override
   Future<List<TaskData>> build() async {
+    service = await ApiService.create();
     return fetchTasks();
   }
 
   Future<List<TaskData>> fetchTasks(
       {String? maxCreatedDate, String? minCreatedDate}) async {
-    var service = await ApiService.create();
+    // var service = await ApiService.create();
     final List<TaskData> content = await service.getTasks();
     return content;
   }
 
   Future<void> completeTask(TaskPutData task) async {
-    var service = await ApiService.create();
-    await service.postCompleteTask(task);
+    // var service = await ApiService.create();
+    await service.putCompleteTask(task);
+  }
+
+  Future<void> createTask(TaskPostData task) async {
+    // var service = await ApiService.create();
+    await service.postTask(task);
   }
 }
 

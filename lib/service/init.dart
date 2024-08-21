@@ -1,5 +1,6 @@
 import 'package:hive_flutter/adapters.dart';
 
+import '../model/priority/priority.dart';
 import '../model/tag/tag.dart';
 import '../model/task/task.dart';
 import '../model/user/user.dart';

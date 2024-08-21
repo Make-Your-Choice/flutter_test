@@ -21,7 +21,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.white,
-            primary: const Color.fromRGBO(117, 110, 243, 1)),
+            primary: const Color.fromRGBO(117, 110, 243, 1),
+          secondary: const Color.fromRGBO(233, 241, 255, 1)
+        ),
         useMaterial3: true,
       ),
       routerConfig: router,

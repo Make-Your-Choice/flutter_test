@@ -162,7 +162,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 if (_formKey.currentState!.validate()) {
                                   try {
                                     var service = await ApiService.create();
-                                    service.postUser(
+                                    await service.postUser(
                                         _nameController.text,
                                         _emailController.text,
                                         _passwordController.text);
