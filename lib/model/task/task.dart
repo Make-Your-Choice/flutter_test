@@ -39,12 +39,19 @@ class TaskData {
 
   // TaskData(this.sid, this.title, this.text, this.isDone, this.tag,
   //     [this.createdAt, this.priority = Priority.LOW, this.finishAt, this.isSynchronized = true]);
-  TaskData({this.sid, required this.title, required this.text, required this.isDone, required this.tag,
-      this.createdAt, this.priority = Priority.LOW, this.finishAt, this.syncStatus = SyncStatus.BOTH});
+  TaskData(
+      {this.sid,
+      required this.title,
+      required this.text,
+      required this.isDone,
+      required this.tag,
+      this.createdAt,
+      this.priority = Priority.LOW,
+      this.finishAt,
+      this.syncStatus = SyncStatus.BOTH});
 
-  factory TaskData.fromJson(Map<String, dynamic> json) => _$TaskDataFromJson(json);
+  factory TaskData.fromJson(Map<String, dynamic> json) =>
+      _$TaskDataFromJson(json);
 
   Map<String, dynamic> toJson() => _$TaskDataToJson(this);
 }
-
-

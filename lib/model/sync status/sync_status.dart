@@ -1,5 +1,1 @@
-enum SyncStatus {
-  BOTH,
-  LOCAL_ONLY,
-  SERVER_ONLY
-}
+enum SyncStatus { BOTH, LOCAL_ONLY, SERVER_ONLY }

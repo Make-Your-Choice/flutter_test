@@ -1,19 +1,13 @@
-import 'package:dio/dio.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:project1/model/task%20post/task_post.dart';
-import 'package:project1/model/task/task.dart';
 
 import '../api/provider.dart';
-import 'login.dart';
 import '../model/priority/priority.dart';
 import '../model/tag/tag.dart';
-import '../model/user/user.dart';
-import '../model/user create/user_create.dart';
 
 class AddTaskPage extends ConsumerStatefulWidget {
   const AddTaskPage({super.key, required this.title});
@@ -26,22 +20,16 @@ class AddTaskPage extends ConsumerStatefulWidget {
 
 class _AddTaskPageState extends ConsumerState<AddTaskPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  // final dio = Dio(
-  //     BaseOptions(baseUrl: 'https://test-mobile.estesis.tech/api/v1', headers: {
-  //       HttpHeaders.contentTypeHeader: 'application/json',
-  //       HttpHeaders.acceptHeader: 'application/json'
-  //     }));
   Box<TagData> tagBox = Hive.box<TagData>('tagBox');
+
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-
   final TextEditingController _dateStartController = TextEditingController();
   final TextEditingController _timeStartController = TextEditingController();
   final TextEditingController _dateEndController = TextEditingController();
   final TextEditingController _timeEndController = TextEditingController();
+
   Priority _priorityController = Priority.LOW;
-  final List<bool> _selectedPriority = <bool>[false, false, true];
   bool _deadlineCheck = false;
   TagData _tagController = Hive.box<TagData>('tagBox').values.first;
 
@@ -53,9 +41,6 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
       (Priority.MID, 'Medium'),
       (Priority.LOW, 'Low')
     ];
-
-    var taskData = ref.watch(taskProvider);
-    // int selectedPriority = 2;
 
     return Scaffold(
         appBar: AppBar(
@@ -315,9 +300,6 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                                         ? Theme.of(context)
                                                             .primaryColor
                                                         : Colors.black45)),
-                                                // backgroundColor: WidgetStatePropertyAll(
-                                                //   item.$1 == _priorityController ? Theme.of(context).primaryColor : Theme.of(context).canvasColor
-                                                // ),
                                                 maximumSize:
                                                     WidgetStatePropertyAll(Size(
                                                         MediaQuery.of(context)
@@ -328,9 +310,6 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                                         50)),
                                                 minimumSize: WidgetStatePropertyAll(
                                                     Size(MediaQuery.of(context).size.width / 3 - 27, 50)),
-                                                // padding: const WidgetStatePropertyAll(
-                                                //   EdgeInsets.all(20)
-                                                // ),
                                                 shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
                                             onPressed: () {
                                               setState(() {
@@ -343,33 +322,6 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                                   const TextStyle(fontSize: 16),
                                             ))))
                                     .toList()),
-                            // ToggleButtons(
-                            //     isSelected: _selectedPriority,
-                            //     onPressed: (int index) {
-                            //       setState(() {
-                            //         for(int i = 0; i < _selectedPriority.length; i++) {
-                            //           _selectedPriority[i] = i == index;
-                            //         }
-                            //       });
-                            //     },
-                            //     selectedBorderColor: Theme.of(context).primaryColor,
-                            //     selectedColor: Colors.black,
-                            //     fillColor: Theme.of(context).canvasColor,
-                            //     borderRadius: BorderRadius.circular(15),
-                            //     borderColor: Colors.black45,
-                            //     borderWidth: 2,
-                            //     constraints: BoxConstraints(
-                            //       minWidth: MediaQuery.of(context).size.width / 3 - 17,
-                            //       minHeight: 60.0
-                            //     ),
-                            //     children: priorityList
-                            //         .map(((Priority, String) item) =>
-                            //           Text(
-                            //             item.$2,
-                            //             style: const TextStyle(
-                            //             fontSize: 16
-                            //           ),))
-                            //         .toList()),
                             const SizedBox(height: 40),
                             Container(
                               width: double.infinity,
@@ -397,11 +349,12 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                           text: _descriptionController.text,
                                           tagSid: _tagController.sid,
                                           priority: _priorityController);
-                                      if(_dateEndController.text.isNotEmpty && _timeEndController.text.isNotEmpty) {
+                                      if (_dateEndController.text.isNotEmpty &&
+                                          _timeEndController.text.isNotEmpty) {
                                         DateFormat formatDate =
-                                        DateFormat('dd/MM/yyyy');
+                                            DateFormat('dd/MM/yyyy');
                                         DateFormat formatTime =
-                                        DateFormat('HH:mm');
+                                            DateFormat('HH:mm');
                                         DateTime dateEnd = formatDate
                                             .parse(_dateEndController.text);
                                         DateTime timeEnd = formatTime
@@ -436,15 +389,6 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                                           Navigator.pop(
                                                               context);
                                                           context.go('/tasks');
-                                                          // Navigator.pop(
-                                                          //     context);
-                                                          // Navigator.push(
-                                                          //     context,
-                                                          //     MaterialPageRoute(
-                                                          //         builder: (context) =>
-                                                          //             const LoginPage(
-                                                          //                 title:
-                                                          //                     'Flutter Demo Home Page')));
                                                         },
                                                         child: const Text(
                                                             'Return'),
@@ -501,7 +445,6 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
 
   List<DropdownMenuItem<TagData>> get dropdownItems {
     List<DropdownMenuItem<TagData>> menuItems = [];
-    // menuItems.add(const DropdownMenuItem(value: null, child: Text('-')));
     List<TagData> tagList = tagBox.values.toList();
     for (var i in tagList) {
       menuItems.add(DropdownMenuItem(value: i, child: Text(i.name)));

@@ -46,7 +46,10 @@ class ApiService {
             .toList();
 
         if (Hive.box<TaskData>('taskBox').isEmpty) {
-          Hive.box<TaskData>('taskBox').addAll(tasks);
+          for (var item in tasks) {
+            Hive.box<TaskData>('taskBox').put(item.sid, item);
+          }
+          // Hive.box<TaskData>('taskBox').addAll(tasks);
         } else {
           List<TaskData> taskDataList =
               Hive.box<TaskData>('taskBox').values.toList();
@@ -104,8 +107,7 @@ class ApiService {
       } else if (response.statusCode == 500 ||
           response.statusCode == 503 ||
           response.statusCode == 504) {
-        tasks = Hive.box<TaskData>('taskBox').values.toList();
-        return tasks;
+        return Hive.box<TaskData>('taskBox').values.toList();
       } else {
         throw Exception('Tasks not found!');
       }
@@ -121,7 +123,8 @@ class ApiService {
       response = await dio.post('/tasks', data: task);
       if (response.statusCode == 200) {
         newTask = TaskData.fromJson(response.data);
-        Hive.box<TaskData>('taskBox').add(newTask);
+        // Hive.box<TaskData>('taskBox').add(newTask);
+        Hive.box<TaskData>('taskBox').put(newTask.sid, newTask);
         return newTask;
         // if (Hive.box<TaskData>('taskBox').isEmpty) {
         //   Hive.box<TaskData>('taskBox').addAll(tasks);
@@ -130,18 +133,20 @@ class ApiService {
       } else if (response.statusCode == 500 ||
           response.statusCode == 503 ||
           response.statusCode == 504) {
-        TagData tag = Hive.box<TagData>('tagBox')
-            .values
-            .firstWhere((item) => item.sid == task.tagSid);
+        TagData? tag = Hive.box<TagData>('tagBox').get(task.tagSid);
+        // TagData tag = Hive.box<TagData>('tagBox')
+        //     .values
+        //     .firstWhere((item) => item.sid == task.tagSid);
         TaskData localTask = TaskData(
             title: task.title,
             text: task.text,
             isDone: false,
-            tag: tag,
+            tag: tag!,
             priority: task.priority,
             finishAt: task.finishAt,
             syncStatus: SyncStatus.LOCAL_ONLY);
-        Hive.box<TaskData>('taskBox').add(localTask);
+        Hive.box<TaskData>('taskData').put(localTask.sid, localTask);
+        // Hive.box<TaskData>('taskBox').add(localTask);
         return localTask;
       } else {
         throw Exception('Could not create task!');
@@ -158,25 +163,37 @@ class ApiService {
       response = await dio.put('/tasks', data: task);
       if (response.statusCode == 200) {
         newTask = TaskData.fromJson(response.data);
+
+        Hive.box<TaskData>('taskBox').put(newTask.sid, newTask);
+
         return newTask;
       } else if (response.statusCode == 500 ||
           response.statusCode == 503 ||
           response.statusCode == 504) {
-        TagData tag = Hive.box<TagData>('tagBox')
-            .values
-            .firstWhere((item) => item.sid == task.tagSid);
 
-        //TODO implement update in box
+        TagData? tag = Hive.box<TagData>('tagBox').get(task.tagSid);
 
-        TaskData localTask = Hive.box<TaskData>('taskBox').values.firstWhere((item) => item.sid == task.sid);
+        // TagData tag = Hive.box<TagData>('tagBox')
+        //     .values
+        //     .firstWhere((item) => item.sid == task.tagSid);
+
+        // TaskData localTask = Hive.box<TaskData>('taskBox')
+        //     .values
+        //     .firstWhere((item) => item.sid == task.sid);
+
+        TaskData? localTask = Hive.box<TaskData>('taskBox').get(task.sid);
+
         // int index = Hive.box<TaskData>('taskBox')
-        localTask.title = task.title;
-        localTask.text = task.text;
-        localTask.finishAt = task.finishAt;
-        localTask.priority = task.priority;
-        localTask.tag = tag;
-        localTask.isDone = task.isDone;
-        Hive.box<TaskData>('taskBox').add(localTask);
+
+        localTask?.title = task.title;
+        localTask?.text = task.text;
+        localTask?.finishAt = task.finishAt;
+        localTask?.priority = task.priority;
+        localTask?.tag = tag!;
+        localTask?.isDone = task.isDone;
+
+        Hive.box<TaskData>('taskBox').put(localTask?.sid, localTask!);
+        // Hive.box<TaskData>('taskBox').add(localTask);
         return localTask;
       } else {
         throw Exception('Could not update! Task not found!');
@@ -194,15 +211,22 @@ class ApiService {
       response = await dio.get(
         '/tags',
       );
-      print(response.statusCode);
+      // print(response.statusCode);
       if (response.statusCode == 200) {
         tags = (response.data['items'] as List)
             .map((i) => TagData.fromJson(i))
             .toList();
         if (Hive.box<TagData>('tagBox').isEmpty) {
-          Hive.box<TagData>('tagBox').addAll(tags);
+          // Hive.box<TagData>('tagBox').addAll(tags);
+          for(var item in tags) {
+            Hive.box<TagData>('tagBox').put(item.sid, item);
+          }
         }
         return tags;
+      } else if (response.statusCode == 500 ||
+          response.statusCode == 503 ||
+          response.statusCode == 504) {
+        return Hive.box<TagData>('tagBox').values.toList();
       } else {
         throw Exception('Tags not found!');
       }
@@ -236,16 +260,16 @@ class ApiService {
   Future<Token> getToken(String email, String password) async {
     UserLogin userLogin = UserLogin(email, password);
     Response<dynamic> response;
-    // Dio dioLogin = Dio(BaseOptions(
-    //     baseUrl: 'https://test-mobile.estesis.tech/api/v1',
-    //     headers: {
-    //       HttpHeaders.contentTypeHeader: 'application/x-www-form-urlencoded',
-    //       HttpHeaders.acceptHeader: 'application/json'
-    //     }));
+    Dio dioLogin = Dio(BaseOptions(
+        baseUrl: 'https://test-mobile.estesis.tech/api/v1',
+        headers: {
+          HttpHeaders.contentTypeHeader: 'application/x-www-form-urlencoded',
+          HttpHeaders.acceptHeader: 'application/json'
+        }));
 
-    Dio dioLogin = Dio();
-    dioLogin.options.baseUrl = 'https://test-mobile.estesis.tech/api/v1';
-    dioLogin.options.contentType = Headers.formUrlEncodedContentType;
+    // Dio dioLogin = Dio();
+    // dioLogin.options.baseUrl = 'https://test-mobile.estesis.tech/api/v1';
+    // dioLogin.options.contentType = Headers.formUrlEncodedContentType;
     try {
       response = await dioLogin.post('/login', data: userLogin.toJson());
       if (response.statusCode == 200) {
@@ -259,6 +283,37 @@ class ApiService {
         return Token.fromJson(response.data);
       } else {
         throw Exception('Login error!');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Token> refreshToken(Token token) async {
+    Response<dynamic> response;
+    Dio dioRefresh = Dio(BaseOptions(
+        baseUrl: 'https://test-mobile.estesis.tech/api/v1',
+        headers: {
+          HttpHeaders.contentTypeHeader: 'application/json',
+          HttpHeaders.acceptHeader: 'application/json'
+        }));
+
+    // dioRefresh.options.baseUrl = 'https://test-mobile.estesis.tech/api/v1';
+    // dioRefresh.options.contentType = Headers.formUrlEncodedContentType;
+    try {
+      response = await dioRefresh
+          .post('/refresh_token', queryParameters: {'refresh_token': token});
+      if (response.statusCode == 200) {
+        FlutterSecureStorage storage = const FlutterSecureStorage();
+        Token newToken = Token.fromJson(response.data);
+        // String accessToken = Token.fromJson(response.data).accessToken;
+        // String refresh_token = Token.fromJson(response.data)
+        storage.deleteAll();
+        storage.write(key: 'access_token', value: newToken.accessToken);
+        storage.write(key: 'refresh_token', value: newToken.refreshToken);
+        return Token.fromJson(response.data);
+      } else {
+        throw Exception('Token refresh error!');
       }
     } catch (e) {
       rethrow;

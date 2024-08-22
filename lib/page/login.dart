@@ -1,15 +1,13 @@
-import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:project1/api/api_service.dart';
 
+import '../model/task/task.dart';
 import '../model/token/token.dart';
-import '../model/user login/user_login.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.title});
@@ -148,6 +146,8 @@ class _LoginPageState extends State<LoginPage> {
                                     // service.getToken(
                                     //     _emailController.text,
                                     //     _passwordController.text);
+                                    print(Hive.box<TaskData>('taskBox').keys);
+                                    print(Hive.box<TaskData>('taskBox').values);
                                     await service.getToken(
                                         _emailController.text,
                                         _passwordController.text);
@@ -168,7 +168,8 @@ class _LoginPageState extends State<LoginPage> {
                                                     ElevatedButton(
                                                       onPressed: () {
                                                         Navigator.pop(context);
-                                                        // context.go('/sign-in');
+                                                        // TODO hide it
+                                                        context.go('/tasks');
                                                       },
                                                       child:
                                                           const Text('Return'),
@@ -223,24 +224,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
-  // Future<Token> getToken(String email, String password) async {
-  //   UserLogin userLogin = UserLogin(email, password);
-  //   Response<dynamic> response;
-  //   try {
-  //     response = await dio.post('/login', data: userLogin.toJson());
-  //     if (response.statusCode == 200) {
-  //       FlutterSecureStorage storage = const FlutterSecureStorage();
-  //       String accessToken = Token.fromJson(response.data).accessToken;
-  //       storage.deleteAll();
-  //       storage.write(key: 'access_token', value: accessToken);
-  //       return Token.fromJson(response.data);
-  //     } else {
-  //       throw Exception('Login error!');
-  //     }
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-  // }
-
 }

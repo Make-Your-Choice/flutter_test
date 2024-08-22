@@ -1,8 +1,4 @@
-import 'dart:io';
 
-import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:hive/hive.dart';
 import 'package:project1/api/api_service.dart';
 import 'package:project1/model/task%20put/task_put.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -10,15 +6,13 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../model/tag/tag.dart';
 import '../model/task post/task_post.dart';
 import '../model/task/task.dart';
-import '../model/token/token.dart';
-import '../model/user login/user_login.dart';
 
 part 'provider.g.dart';
-
 
 @Riverpod()
 class Task extends _$Task {
   late ApiService service;
+
   @override
   Future<List<TaskData>> build() async {
     service = await ApiService.create();

@@ -1,13 +1,9 @@
-import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:project1/api/api_service.dart';
 
-import '../model/user/user.dart';
-import '../model/user create/user_create.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key, required this.title});

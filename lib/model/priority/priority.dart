@@ -14,4 +14,5 @@ enum Priority {
   MID,
   @JsonValue(2)
   @HiveField(2)
-  LOW }
+  LOW
+}
