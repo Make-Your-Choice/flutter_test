@@ -167,22 +167,18 @@ class _RegisterPageState extends State<RegisterPage> {
                                         builder: (BuildContext context) {
                                           return AlertDialog(
                                             title: const Text('Success'),
-                                            content: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(10.0),
-                                                child: Column(
-                                                  children: [
-                                                    const Text(
+                                            content: const Text(
                                                         'Registration success'),
-                                                    ElevatedButton(
-                                                      onPressed: () {
-                                                        context.go('/sign-in');
-                                                      },
-                                                      child:
-                                                          const Text('Return'),
-                                                    ),
-                                                  ],
-                                                )),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                  context.go('/sign-in');
+                                                },
+                                                child:
+                                                const Text('Return'),
+                                              )
+                                            ],
                                           );
                                         });
                                   } catch (e) {

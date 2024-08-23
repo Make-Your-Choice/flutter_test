@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -27,14 +26,13 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        title: Text(widget.title),
-      ),
-      body: Center(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          title: Text(widget.title),
+        ),
+        body: Center(
           child: buildBody(),
-      )
-    );
+        ));
   }
 
   SizedBox buildBody() {
@@ -146,36 +144,31 @@ class _LoginPageState extends State<LoginPage> {
                                     // service.getToken(
                                     //     _emailController.text,
                                     //     _passwordController.text);
-                                    print(Hive.box<TaskData>('taskBox').keys);
-                                    print(Hive.box<TaskData>('taskBox').values);
                                     await service.getToken(
                                         _emailController.text,
                                         _passwordController.text);
                                     context.go('/tasks');
-                                  } catch (e) {
+                                  } on DioException catch (e) {
+                                    // String errMsg = '';
+                                    // switch(e.response?.statusCode) {
+                                    //   case 500: errMsg = 'Server is available'; break;
+                                    // }
                                     showDialog(
+                                        useSafeArea: true,
                                         context: context,
                                         builder: (BuildContext context) {
                                           return AlertDialog(
                                             title: const Text('Error'),
-                                            content: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(10.0),
-                                                child: Column(
-                                                  children: [
-                                                    const Text(
-                                                        'Login failed'),
-                                                    ElevatedButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                        // TODO hide it
-                                                        context.go('/tasks');
-                                                      },
-                                                      child:
-                                                          const Text('Return'),
-                                                    ),
-                                                  ],
-                                                )),
+                                            content: Text('Login failed!\n${e.response?.statusCode}: ${e.response?.statusMessage}'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                  // context.go('/tasks');
+                                                },
+                                                child: const Text('Return'),
+                                              )
+                                            ],
                                           );
                                         });
                                   }

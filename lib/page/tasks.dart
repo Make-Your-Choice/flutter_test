@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -8,19 +9,25 @@ import 'package:project1/api/provider.dart';
 
 import '../model/task put/task_put.dart';
 
-class TasksPage extends ConsumerWidget {
+class TasksPage extends ConsumerStatefulWidget {
   const TasksPage({super.key, required this.title});
 
   final String title;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConsumerStatefulWidget> createState() => _TaskPageState();
+}
+class _TaskPageState extends ConsumerState<TasksPage> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
     // final tasks = ref.read(taskProvider);
     var taskData = ref.watch(taskProvider);
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text(title),
+          title: Text(widget.title),
           actions: [
             IconButton(
                 onPressed: () => {context.go('/add-task')},
@@ -31,13 +38,14 @@ class TasksPage extends ConsumerWidget {
           ],
         ),
         body: Consumer(builder: (context, ref, child) {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
+          return SingleChildScrollView(
+            //mainAxisAlignment: MainAxisAlignment.start,
+            child:
               Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(children: [
                     SearchBar(
+                      controller: _searchController,
                       shadowColor:
                           const WidgetStatePropertyAll(Colors.transparent),
                       backgroundColor: WidgetStatePropertyAll(
@@ -140,10 +148,12 @@ class TasksPage extends ConsumerWidget {
                                                             data.elementAt(listIndex).tag.sid
                                                         );
                                                     upd.isDone = true;
+
                                                     ref
                                                         .watch(taskProvider
                                                             .notifier)
                                                         .completeTask(upd);
+                                                    ref.refresh(taskProvider);
                                                   }),
                                             ]),
                                         endActionPane: ActionPane(
@@ -228,14 +238,9 @@ class TasksPage extends ConsumerWidget {
                                                               },
                                                             ),
                                                             Text(
-                                                              data
-                                                                  .elementAt(
-                                                                      listIndex)
-                                                                  .title,
+                                                              data.elementAt(listIndex).title,
                                                               style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          16),
+                                                                  const TextStyle(fontSize: 16),
                                                             )
                                                           ],
                                                         ),
@@ -297,10 +302,14 @@ class TasksPage extends ConsumerWidget {
                                     ],
                                   );
                                 })),
-                        error: (error, stacktrace) => Text(error.toString()),
-                        loading: () => const CircularProgressIndicator())
+                        error: (error, stacktrace)  {
+                            if (error is DioException) {
+                              return Text('Error! ${error.response?.statusCode}: ${error.response?.statusMessage}');
+                            }
+                            return const Text('Error! Unexpected error!');
+                        },
+          loading: () => const CircularProgressIndicator())
                   ]))
-            ],
           );
         }));
   }

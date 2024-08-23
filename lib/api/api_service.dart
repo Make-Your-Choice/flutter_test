@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive/hive.dart';
 import 'package:project1/model/sync%20status/sync_status.dart';
 import 'package:project1/model/tag/tag.dart';
+import 'package:project1/api/api_interceptor.dart';
 
 import '../model/task post/task_post.dart';
 import '../model/task put/task_put.dart';
@@ -16,21 +18,80 @@ import '../model/user/user.dart';
 
 class ApiService {
   static late Dio dio;
+  // static ApiInterceptor interceptor = ApiInterceptor();
 
   ApiService._create();
 
   static Future<ApiService> create() async {
     var service = ApiService._create();
-    var storage = const FlutterSecureStorage();
-    var token = await storage.read(key: 'access_token');
+    // var storage = const FlutterSecureStorage();
+    // var token = await storage.read(key: 'access_token');
     dio = Dio(BaseOptions(
         baseUrl: 'https://test-mobile.estesis.tech/api/v1',
         headers: {
           HttpHeaders.contentTypeHeader: 'application/json',
           HttpHeaders.acceptHeader: 'application/json',
-          HttpHeaders.authorizationHeader: 'Bearer $token'
         }));
+    dio.interceptors.add(ApiInterceptor());
     return service;
+  }
+
+  List<TaskData> fetchLocalServerData (List<TaskData> local, List<TaskData> server) {
+    List<TaskData> data = [];
+    DeepCollectionEquality eq = const DeepCollectionEquality();
+    for(var item1 in local) {
+      for(var item2 in server) {
+        if(item1.sid == item2.sid) {
+          if(eq.equals(item1, item2)) {
+            item1.syncStatus = SyncStatus.BOTH;
+            data.add(item1);
+          }
+          item1.syncStatus = SyncStatus.LOCAL_ONLY;
+          data.add(item1);
+        }
+      }
+    }
+    return data;
+  }
+
+  List<TaskData> fetchLocalData(List<TaskData> local, List<TaskData> server) {
+    List<TaskData> data = [];
+
+    DeepCollectionEquality eq = const DeepCollectionEquality();
+    for(var item1 in local) {
+      for(var item2 in server) {
+        if(item1.sid == item2.sid) {
+          if(eq.equals(item1, item2)) {
+            item1.syncStatus = SyncStatus.BOTH;
+          }
+          item1.syncStatus = SyncStatus.LOCAL_ONLY;
+          data.add(item1);
+        } else {
+          item1.syncStatus = SyncStatus.LOCAL_ONLY;
+        }
+      }
+    }
+
+    for(var item1 in local) {
+      for(var item2 in data) {
+        if(item1.sid == item2.sid) {
+
+        }
+      }
+    }
+
+    for (var item in server) {
+      item.syncStatus = SyncStatus.BOTH;
+    }
+
+    for (var item in data) {
+      item.syncStatus = SyncStatus.LOCAL_ONLY;
+    }
+
+    server.addAll(data);
+    server
+        .sort((a, b) => a.syncStatus == SyncStatus.LOCAL_ONLY ? 1 : -1);
+    return [];
   }
 
   Future<List<TaskData>> getTasks() async {
@@ -53,14 +114,40 @@ class ApiService {
         } else {
           List<TaskData> taskDataList =
               Hive.box<TaskData>('taskBox').values.toList();
+          if(taskDataList.length == tasks.length) {
+            tasks = fetchLocalServerData(taskDataList, tasks);
+          }
           if (taskDataList.length > tasks.length) {
             List<TaskData> localData = [];
+
+            // DeepCollectionEquality eq = const DeepCollectionEquality();
+            // for(var item1 in taskDataList) {
+            //   for(var item2 in tasks) {
+            //     if(!eq.equals(item1, item2)) {
+            //
+            //     }
+            //   }
+            // }
 
             for (var item in taskDataList) {
               if (!tasks.contains(item)) {
                 localData.add(item);
               }
             }
+
+            // List<bool> localBool = [];
+            // for (var i = 0; i < taskDataList.length; i++) {
+            //   localBool[i] = false;
+            // }
+            //
+            // for(var i = 0; i < taskDataList.length; i++) {
+            //   for (var j = 0; j < tasks.length; j++) {
+            //     if(item1.sid == item2.sid) {
+            //       localBool[i] = true;
+            //     }
+            //   }
+            // }
+
 
             for (var item in tasks) {
               item.syncStatus = SyncStatus.BOTH;
@@ -109,9 +196,15 @@ class ApiService {
           response.statusCode == 504) {
         return Hive.box<TaskData>('taskBox').values.toList();
       } else {
-        throw Exception('Tasks not found!');
+        // throw Exception('Tasks not found!');
+        throw DioException(
+            requestOptions: RequestOptions(),
+            response: Response(
+                requestOptions: RequestOptions(),
+                statusCode: 404,
+                statusMessage: 'Tasks not found'));
       }
-    } catch (e) {
+    } on DioException catch (e) {
       rethrow;
     }
   }
@@ -149,9 +242,15 @@ class ApiService {
         // Hive.box<TaskData>('taskBox').add(localTask);
         return localTask;
       } else {
-        throw Exception('Could not create task!');
+        throw DioException(
+            requestOptions: RequestOptions(),
+            response: Response(
+                requestOptions: RequestOptions(),
+                statusCode: 500,
+                statusMessage: 'Could not create task'));
+        // throw Exception('Could not create task!');
       }
-    } catch (e) {
+    } on DioException catch (e) {
       rethrow;
     }
   }
@@ -170,7 +269,6 @@ class ApiService {
       } else if (response.statusCode == 500 ||
           response.statusCode == 503 ||
           response.statusCode == 504) {
-
         TagData? tag = Hive.box<TagData>('tagBox').get(task.tagSid);
 
         // TagData tag = Hive.box<TagData>('tagBox')
@@ -196,9 +294,15 @@ class ApiService {
         // Hive.box<TaskData>('taskBox').add(localTask);
         return localTask;
       } else {
-        throw Exception('Could not update! Task not found!');
+        throw DioException(
+            requestOptions: RequestOptions(),
+            response: Response(
+                requestOptions: RequestOptions(),
+                statusCode: 500,
+                statusMessage: 'Could not update! Task not found!'));
+        // throw Exception('Could not update! Task not found!');
       }
-    } catch (e) {
+    } on DioException catch (e) {
       rethrow;
     }
   }
@@ -218,7 +322,7 @@ class ApiService {
             .toList();
         if (Hive.box<TagData>('tagBox').isEmpty) {
           // Hive.box<TagData>('tagBox').addAll(tags);
-          for(var item in tags) {
+          for (var item in tags) {
             Hive.box<TagData>('tagBox').put(item.sid, item);
           }
         }
@@ -228,9 +332,15 @@ class ApiService {
           response.statusCode == 504) {
         return Hive.box<TagData>('tagBox').values.toList();
       } else {
-        throw Exception('Tags not found!');
+        throw DioException(
+            requestOptions: RequestOptions(),
+            response: Response(
+                requestOptions: RequestOptions(),
+                statusCode: 500,
+                statusMessage: 'Tags not found!'));
+        // throw Exception('Tags not found!');
       }
-    } catch (e) {
+    } on DioException catch (e) {
       rethrow;
     }
   }
@@ -258,6 +368,14 @@ class ApiService {
   }
 
   Future<Token> getToken(String email, String password) async {
+    FlutterSecureStorage storage = const FlutterSecureStorage();
+    // if(await storage.containsKey(key: 'access_token')) {
+    //
+    //   String? acs = await storage.read(key: 'access_token');
+    //   String? ref = await storage.read(key: 'refresh_token');
+    //
+    //   return Token(acs!, ref!);
+    // }
     UserLogin userLogin = UserLogin(email, password);
     Response<dynamic> response;
     Dio dioLogin = Dio(BaseOptions(
@@ -267,28 +385,59 @@ class ApiService {
           HttpHeaders.acceptHeader: 'application/json'
         }));
 
+    // dioLogin.interceptors.add(ApiInterceptor());
+
     // Dio dioLogin = Dio();
     // dioLogin.options.baseUrl = 'https://test-mobile.estesis.tech/api/v1';
     // dioLogin.options.contentType = Headers.formUrlEncodedContentType;
+
     try {
       response = await dioLogin.post('/login', data: userLogin.toJson());
       if (response.statusCode == 200) {
-        FlutterSecureStorage storage = const FlutterSecureStorage();
         Token token = Token.fromJson(response.data);
-        // String accessToken = Token.fromJson(response.data).accessToken;
-        // String refresh_token = Token.fromJson(response.data)
-        storage.deleteAll();
-        storage.write(key: 'access_token', value: token.accessToken);
-        storage.write(key: 'refresh_token', value: token.refreshToken);
+        // storage.deleteAll();
+        await storage.write(key: 'access_token', value: token.accessToken);
+        await storage.write(key: 'refresh_token', value: token.refreshToken);
         return Token.fromJson(response.data);
       } else {
         throw Exception('Login error!');
       }
-    } catch (e) {
+    } on DioException catch (e) {
       rethrow;
     }
   }
 
+  Future<bool> checkToken() async {
+    FlutterSecureStorage storage = const FlutterSecureStorage();
+    Response<dynamic> response;
+    try {
+      if (await storage.containsKey(key: 'access_token')) {
+        response = await dio.get('/users/me');
+        if (response.statusCode == 200) {
+          return true;
+          // } else if (response.statusCode == 401) {
+          //   String? acsToken = await storage.read(key: 'access_token');
+          //   String? refToken = await storage.read(key: 'refresh_token');
+          //   Token token = Token(acsToken!, refToken!);
+          //   Token refreshedToken = await refreshToken(token);
+          //   await checkToken();
+          // }
+        } else {
+          throw DioException(
+              requestOptions: RequestOptions(),
+              response: Response(
+                  requestOptions: RequestOptions(),
+                  statusCode: 500,
+                  statusMessage: 'Could not check token!'));
+        }
+      }
+      return false;
+    } on DioException catch (e) {
+      rethrow;
+    }
+  }
+
+  @deprecated
   Future<Token> refreshToken(Token token) async {
     Response<dynamic> response;
     Dio dioRefresh = Dio(BaseOptions(
@@ -297,6 +446,12 @@ class ApiService {
           HttpHeaders.contentTypeHeader: 'application/json',
           HttpHeaders.acceptHeader: 'application/json'
         }));
+    // Dio dioRefresh = Dio(BaseOptions(
+    //     baseUrl: 'https://test-mobile.estesis.tech/api/v1',
+    //     headers: {
+    //       HttpHeaders.contentTypeHeader: 'application/json',
+    //       HttpHeaders.acceptHeader: 'application/json'
+    //     }));
 
     // dioRefresh.options.baseUrl = 'https://test-mobile.estesis.tech/api/v1';
     // dioRefresh.options.contentType = Headers.formUrlEncodedContentType;
@@ -308,14 +463,30 @@ class ApiService {
         Token newToken = Token.fromJson(response.data);
         // String accessToken = Token.fromJson(response.data).accessToken;
         // String refresh_token = Token.fromJson(response.data)
-        storage.deleteAll();
-        storage.write(key: 'access_token', value: newToken.accessToken);
-        storage.write(key: 'refresh_token', value: newToken.refreshToken);
+        await storage.deleteAll();
+        await storage.write(key: 'access_token', value: newToken.accessToken);
+        await storage.write(key: 'refresh_token', value: newToken.refreshToken);
         return Token.fromJson(response.data);
+        // } else if (response.statusCode == 500 ||
+        //     response.statusCode == 503 ||
+        //     response.statusCode == 504) {
+        //   throw DioException(
+        //       requestOptions: RequestOptions(),
+        //       response: Response(
+        //           requestOptions: RequestOptions(),
+        //           statusCode: 500,
+        //           statusMessage: 'Tasks not found'
+        //       )
+        //   );
       } else {
-        throw Exception('Token refresh error!');
+        throw DioException(
+            requestOptions: RequestOptions(),
+            response: Response(
+                requestOptions: RequestOptions(),
+                statusCode: 500,
+                statusMessage: 'Could not refresh token'));
       }
-    } catch (e) {
+    } on DioException catch (e) {
       rethrow;
     }
   }
