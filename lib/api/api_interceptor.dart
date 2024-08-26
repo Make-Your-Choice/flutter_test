@@ -22,7 +22,7 @@ class ApiInterceptor extends Interceptor {
   @override
   Future<void> onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
-    print('onReq: ${options.data}');
+    // print('onReq: ${options.data}');
     try {
       Token token = await authToken;
       options.headers.addAll({
@@ -37,7 +37,7 @@ class ApiInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     super.onResponse(response, handler);
-    print('onResp: ${response.statusCode}');
+    print('Response: ${response.statusCode} - ${response.statusMessage}');
     return;
   }
 
@@ -57,12 +57,10 @@ class ApiInterceptor extends Interceptor {
           await _retryRequest(err.requestOptions);
         } on DioException catch (e) {
           // handler.reject(err);
-          handler.next(err);
-
+          handler.next(e);
         }
       }
       return;
-      // return;
     }
     handler.next(err);
   }

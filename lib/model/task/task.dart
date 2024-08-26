@@ -54,4 +54,13 @@ class TaskData {
       _$TaskDataFromJson(json);
 
   Map<String, dynamic> toJson() => _$TaskDataToJson(this);
+
+  bool equals(TaskData task) {
+    if(task.sid == sid && task.title == title &&
+        task.text == text && task.finishAt == finishAt &&
+        task.isDone == isDone && task.tag.sid == tag.sid) {
+      return true;
+    }
+    return false;
+  }
 }

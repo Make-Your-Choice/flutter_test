@@ -24,8 +24,6 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _dateStartController = TextEditingController();
-  final TextEditingController _timeStartController = TextEditingController();
   final TextEditingController _dateEndController = TextEditingController();
   final TextEditingController _timeEndController = TextEditingController();
 
@@ -126,6 +124,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                       30,
                                   child: TextFormField(
                                     readOnly: true,
+                                    enabled: false,
                                     decoration: const InputDecoration(
                                         contentPadding: EdgeInsets.symmetric(
                                             vertical: 20.0, horizontal: 10.0),
@@ -136,24 +135,9 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                                     233, 241, 255, 1)),
                                             borderRadius: BorderRadius.all(
                                                 Radius.circular(15)))),
-                                    controller: _dateStartController,
-                                    onTap: () async {
-                                      DateTime? pickedDate =
-                                          await showDatePicker(
-                                              context: context,
-                                              firstDate: DateTime.now(),
-                                              lastDate: DateTime(3000),
-                                              initialDate: DateTime.now());
-                                      if (pickedDate != null) {
-                                        String formattedDate =
-                                            DateFormat('dd/MM/yyyy')
-                                                .format(pickedDate);
-                                        setState(() {
-                                          _dateStartController.text =
-                                              formattedDate;
-                                        });
-                                      }
-                                    },
+                                    // controller: _dateStartController,
+                                    initialValue: DateFormat('dd/MM/yyyy')
+                                        .format(DateTime.now()),
                                   ),
                                 ),
                                 const SizedBox(
@@ -164,6 +148,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                       30,
                                   child: TextFormField(
                                     readOnly: true,
+                                    enabled: false,
                                     decoration: const InputDecoration(
                                         contentPadding: EdgeInsets.symmetric(
                                             vertical: 20.0, horizontal: 10.0),
@@ -174,21 +159,9 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                                     233, 241, 255, 1)),
                                             borderRadius: BorderRadius.all(
                                                 Radius.circular(15)))),
-                                    controller: _timeStartController,
-                                    onTap: () async {
-                                      TimeOfDay? pickedTime =
-                                          await showTimePicker(
-                                              context: context,
-                                              initialTime: TimeOfDay.now());
-                                      if (pickedTime != null) {
-                                        String formattedDate =
-                                            pickedTime.format(context);
-                                        setState(() {
-                                          _timeStartController.text =
-                                              formattedDate;
-                                        });
-                                      }
-                                    },
+                                    // controller: _timeStartController,
+                                    initialValue:
+                                        TimeOfDay.now().format(context),
                                   ),
                                 ),
                               ],
@@ -197,6 +170,20 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                             Row(
                               children: [
                                 Checkbox(
+                                  checkColor: Colors.black87,
+                                // fillColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+                                //   if (states.contains(WidgetState.disabled)) {
+                                //     return Colors.white;
+                                //     // return Theme.of(context).canvasColor;
+                                //   }
+                                //   return const Color.fromRGBO(177, 209, 153, 1);
+                                // }),
+                                    fillColor: WidgetStatePropertyAll(
+                                      _deadlineCheck ? const Color.fromRGBO(177, 209, 153, 1) : Theme.of(context).canvasColor
+                                    ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5)
+                                  ),
                                     value: _deadlineCheck,
                                     onChanged: (bool? newValue) {
                                       setState(() {
@@ -207,81 +194,101 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                               ],
                             ),
                             const SizedBox(height: 20),
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: MediaQuery.of(context).size.width / 2 -
-                                      30,
-                                  child: TextFormField(
-                                    readOnly: true,
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.symmetric(
-                                            vertical: 20.0, horizontal: 10.0),
-                                        hintText: 'Date',
-                                        border: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Color.fromRGBO(
-                                                    233, 241, 255, 1)),
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(15)))),
-                                    controller: _dateEndController,
-                                    onTap: () async {
-                                      DateTime? pickedDate =
-                                          await showDatePicker(
-                                              context: context,
-                                              firstDate: DateTime.now(),
-                                              lastDate: DateTime(3000),
-                                              initialDate: DateTime.now());
-                                      if (pickedDate != null) {
-                                        String formattedDate =
-                                            DateFormat('dd/MM/yyyy')
-                                                .format(pickedDate);
-                                        setState(() {
-                                          _dateEndController.text =
-                                              formattedDate;
-                                        });
-                                      }
-                                    },
+                            AnimatedCrossFade(
+                              firstCurve: Curves.easeOut,
+                                secondCurve: Curves.easeIn,
+                                firstChild: Column(children: [
+                                  Row(
+                                    children: [
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width / 2 - 30,
+                                        child: TextFormField(
+                                          readOnly: true,
+                                          decoration: const InputDecoration(
+                                              contentPadding:
+                                                  EdgeInsets.symmetric(
+                                                      vertical: 20.0,
+                                                      horizontal: 10.0),
+                                              hintText: 'Date',
+                                              border: OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Color.fromRGBO(
+                                                          233, 241, 255, 1)),
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(
+                                                              15)))),
+                                          controller: _dateEndController,
+                                          onTap: () async {
+                                            DateTime? pickedDate =
+                                                await showDatePicker(
+                                                    context: context,
+                                                    firstDate: DateTime.now(),
+                                                    lastDate: DateTime(3000),
+                                                    initialDate:
+                                                        DateTime.now());
+                                            if (pickedDate != null) {
+                                              String formattedDate =
+                                                  DateFormat('dd/MM/yyyy')
+                                                      .format(pickedDate);
+                                              setState(() {
+                                                _dateEndController.text =
+                                                    formattedDate;
+                                              });
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 20),
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width / 2 - 30,
+                                        child: TextFormField(
+                                          readOnly: true,
+                                          decoration: const InputDecoration(
+                                              contentPadding:
+                                                  EdgeInsets.symmetric(
+                                                      vertical: 20.0,
+                                                      horizontal: 10.0),
+                                              hintText: 'Time',
+                                              border: OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Color.fromRGBO(
+                                                          233, 241, 255, 1)),
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(
+                                                              15)))),
+                                          controller: _timeEndController,
+                                          onTap: () async {
+                                            TimeOfDay? pickedTime =
+                                                await showTimePicker(
+                                                    context: context,
+                                                    initialTime:
+                                                        TimeOfDay.now());
+                                            if (pickedTime != null) {
+                                              String formattedDate =
+                                                  pickedTime.format(context);
+                                              setState(() {
+                                                _timeEndController.text =
+                                                    formattedDate;
+                                              });
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(
-                                  width: 20,
-                                ),
-                                SizedBox(
-                                  width: MediaQuery.of(context).size.width / 2 -
-                                      30,
-                                  child: TextFormField(
-                                    readOnly: true,
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.symmetric(
-                                            vertical: 20.0, horizontal: 10.0),
-                                        hintText: 'Time',
-                                        border: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Color.fromRGBO(
-                                                    233, 241, 255, 1)),
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(15)))),
-                                    controller: _timeEndController,
-                                    onTap: () async {
-                                      TimeOfDay? pickedTime =
-                                          await showTimePicker(
-                                              context: context,
-                                              initialTime: TimeOfDay.now());
-                                      if (pickedTime != null) {
-                                        String formattedDate =
-                                            pickedTime.format(context);
-                                        setState(() {
-                                          _timeEndController.text =
-                                              formattedDate;
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 40),
+                                  const SizedBox(height: 40),
+                                ]),
+                                secondChild: SizedBox(
+                                    height: 0,
+                                    width: MediaQuery.of(context).size.width),
+                                crossFadeState: _deadlineCheck
+                                    ? CrossFadeState.showFirst
+                                    : CrossFadeState.showSecond,
+                                duration: const Duration(seconds: 1)),
                             Row(
                                 children: priorityList
                                     .map((item) => Padding(
@@ -295,17 +302,13 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                                         Colors.black),
                                                 side: WidgetStatePropertyAll(BorderSide(
                                                     width: 2,
-                                                    color: item.$1 ==
-                                                            _priorityController
+                                                    color: item.$1 == _priorityController
                                                         ? Theme.of(context)
                                                             .primaryColor
                                                         : Colors.black45)),
                                                 maximumSize:
                                                     WidgetStatePropertyAll(Size(
-                                                        MediaQuery.of(context)
-                                                                    .size
-                                                                    .width /
-                                                                3 -
+                                                        MediaQuery.of(context).size.width / 3 -
                                                             27,
                                                         50)),
                                                 minimumSize: WidgetStatePropertyAll(
@@ -349,16 +352,22 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                           text: _descriptionController.text,
                                           tagSid: _tagController.sid,
                                           priority: _priorityController);
-                                      if (_dateEndController.text.isNotEmpty &&
-                                          _timeEndController.text.isNotEmpty) {
+                                      if (_dateEndController.text.isNotEmpty) {
                                         DateFormat formatDate =
                                             DateFormat('dd/MM/yyyy');
                                         DateFormat formatTime =
                                             DateFormat('HH:mm');
                                         DateTime dateEnd = formatDate
                                             .parse(_dateEndController.text);
-                                        DateTime timeEnd = formatTime
-                                            .parse(_timeEndController.text);
+                                        DateTime timeEnd;
+                                        if(_timeEndController.text.isNotEmpty) {
+                                          timeEnd = formatTime
+                                              .parse(_timeEndController.text);
+                                        } else {
+                                          timeEnd = formatTime.parse('23:59');
+                                        }
+                                        // DateTime timeEnd = formatTime
+                                        //     .parse(_timeEndController.text);
                                         DateTime dateTime = DateTime(
                                             dateEnd.year,
                                             dateEnd.month,
@@ -370,7 +379,6 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                                       ref
                                           .watch(taskProvider.notifier)
                                           .createTask(task);
-                                      ref.refresh(taskProvider);
                                       // ref.refresh(taskProvider);
                                       showDialog(
                                           context: context,
@@ -444,6 +452,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
   }
 
   List<DropdownMenuItem<TagData>> get dropdownItems {
+
     List<DropdownMenuItem<TagData>> menuItems = [];
     List<TagData> tagList = tagBox.values.toList();
     for (var i in tagList) {

@@ -13,4 +13,5 @@ void init() async {
   await Hive.openBox<User>('userBox');
   await Hive.openBox<TaskData>('taskBox');
   await Hive.openBox<TagData>('tagBox');
+
 }

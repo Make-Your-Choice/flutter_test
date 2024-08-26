@@ -12,6 +12,7 @@ TaskPutData _$TaskPutDataFromJson(Map<String, dynamic> json) => TaskPutData(
       json['text'] as String,
       json['isDone'] as bool,
       json['tagSid'] as String,
+      $enumDecode(_$SyncStatusEnumMap, json['syncStatus']),
       $enumDecodeNullable(_$PriorityEnumMap, json['priority']) ?? Priority.LOW,
       json['finishAt'] == null
           ? null
@@ -27,7 +28,14 @@ Map<String, dynamic> _$TaskPutDataToJson(TaskPutData instance) =>
       'isDone': instance.isDone,
       'tagSid': instance.tagSid,
       'priority': _$PriorityEnumMap[instance.priority]!,
+      'syncStatus': _$SyncStatusEnumMap[instance.syncStatus]!,
     };
+
+const _$SyncStatusEnumMap = {
+  SyncStatus.BOTH: 'BOTH',
+  SyncStatus.LOCAL_ONLY: 'LOCAL_ONLY',
+  SyncStatus.SERVER_ONLY: 'SERVER_ONLY',
+};
 
 const _$PriorityEnumMap = {
   Priority.HIGH: 0,
