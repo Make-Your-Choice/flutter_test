@@ -16,8 +16,15 @@ class TaskPutData {
   Priority priority;
   SyncStatus? syncStatus;
 
-  TaskPutData(this.sid, this.title, this.text, this.isDone, this.tagSid, this.syncStatus,
-      [this.priority = Priority.LOW, this.finishAt]);
+  TaskPutData({
+    required this.sid,
+    required this.title,
+    required this.text,
+    required this.isDone,
+    required this.tagSid,
+    required this.priority,
+    this.syncStatus,
+    this.finishAt});
 
   factory TaskPutData.fromJson(Map<String, dynamic> json) => _$TaskPutDataFromJson(json);
 

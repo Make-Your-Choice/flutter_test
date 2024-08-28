@@ -7,14 +7,14 @@ part of 'task_put.dart';
 // **************************************************************************
 
 TaskPutData _$TaskPutDataFromJson(Map<String, dynamic> json) => TaskPutData(
-      json['sid'] as String,
-      json['title'] as String,
-      json['text'] as String,
-      json['isDone'] as bool,
-      json['tagSid'] as String,
-      $enumDecode(_$SyncStatusEnumMap, json['syncStatus']),
-      $enumDecodeNullable(_$PriorityEnumMap, json['priority']) ?? Priority.LOW,
-      json['finishAt'] == null
+      sid: json['sid'] as String,
+      title: json['title'] as String,
+      text: json['text'] as String,
+      isDone: json['isDone'] as bool,
+      tagSid: json['tagSid'] as String,
+      priority: $enumDecode(_$PriorityEnumMap, json['priority']),
+      syncStatus: $enumDecodeNullable(_$SyncStatusEnumMap, json['syncStatus']),
+      finishAt: json['finishAt'] == null
           ? null
           : DateTime.parse(json['finishAt'] as String),
     );
@@ -28,17 +28,17 @@ Map<String, dynamic> _$TaskPutDataToJson(TaskPutData instance) =>
       'isDone': instance.isDone,
       'tagSid': instance.tagSid,
       'priority': _$PriorityEnumMap[instance.priority]!,
-      'syncStatus': _$SyncStatusEnumMap[instance.syncStatus]!,
+      'syncStatus': _$SyncStatusEnumMap[instance.syncStatus],
     };
-
-const _$SyncStatusEnumMap = {
-  SyncStatus.BOTH: 'BOTH',
-  SyncStatus.LOCAL_ONLY: 'LOCAL_ONLY',
-  SyncStatus.SERVER_ONLY: 'SERVER_ONLY',
-};
 
 const _$PriorityEnumMap = {
   Priority.HIGH: 0,
   Priority.MID: 1,
   Priority.LOW: 2,
+};
+
+const _$SyncStatusEnumMap = {
+  SyncStatus.BOTH: 'BOTH',
+  SyncStatus.LOCAL_ONLY: 'LOCAL_ONLY',
+  SyncStatus.SERVER_ONLY: 'SERVER_ONLY',
 };

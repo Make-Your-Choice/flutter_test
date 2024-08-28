@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:project1/model/task/task.dart';
 import 'package:project1/page/home.dart';
 import 'package:project1/page/login.dart';
 import 'package:project1/page/register.dart';
@@ -33,6 +34,12 @@ final GoRouter router = GoRouter(
           path: '/add-task',
           builder: (BuildContext context, GoRouterState state) {
             return const AddTaskPage(title: 'Add task');
+          }),
+      GoRoute(
+          path: '/edit-task',
+          builder: (BuildContext context, GoRouterState state) {
+            TaskData task = state.extra as TaskData;
+            return AddTaskPage(title: 'Edit task', task: task);
           }),
   ]
 );

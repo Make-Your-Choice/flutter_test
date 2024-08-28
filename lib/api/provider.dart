@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../model/tag/tag.dart';
 import '../model/task post/task_post.dart';
 import '../model/task/task.dart';
+import '../model/token/token.dart';
 
 part 'provider.g.dart';
 
@@ -25,12 +26,14 @@ class Task extends _$Task {
       {String? maxCreatedDate, String? minCreatedDate}) async {
     var service = await ApiService.create();
     final List<TaskData> content = await service.getTasks();
+    // ref.invalidateSelf();
+    // await future;
     return content;
   }
 
-  Future<void> completeTask(TaskPutData task) async {
+  Future<void> updateTask(TaskPutData task) async {
     var service = await ApiService.create();
-    await service.putCompleteTask(task);
+    await service.putTask(task);
     ref.invalidateSelf();
     await future;
   }
@@ -68,6 +71,28 @@ class Tag extends _$Tag {
   Future<List<TagData>> fetchTags() async {
     var service = await ApiService.create();
     final List<TagData> content = await service.getTags();
+    // ref.invalidateSelf();
+    // await future;
     return content;
+  }
+}
+
+@Riverpod()
+class TokenState extends _$TokenState {
+  @override
+  Future<bool> build() async {
+    return checkToken();
+  }
+
+  Future<bool> checkToken() async {
+    var service = await ApiService.create();
+    bool isPresent = await service.checkToken();
+    return isPresent;
+  }
+
+  Future<bool> logOut() async {
+    var service = await ApiService.create();
+    bool isLoggedOut = await service.logOut();
+    return isLoggedOut;
   }
 }

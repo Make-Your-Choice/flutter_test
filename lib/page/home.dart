@@ -46,15 +46,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   //     case AppLifecycleState.hidden: {}
   //   }
   // }
-
-  void _deleteToken() {
-    var storage = const FlutterSecureStorage();
-    storage.deleteAll();
-
-  }
+  //
+  // void _deleteToken() {
+  //   var storage = const FlutterSecureStorage();
+  //   storage.deleteAll();
+  //
+  // }
 
   @override
   Widget build(BuildContext context) {
+    var tokenState = ref.watch(tokenStateProvider);
     return Scaffold(
         backgroundColor: const Color.fromRGBO(102, 82, 255, 1),
         body: Consumer(
@@ -116,34 +117,53 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
                 GestureDetector(
                   onTap: () async {
-                    var service = await ApiService.create();
-                    try {
-                      var isLoggedIn = await service.checkToken();
-                      if (isLoggedIn) {
-                        context.go('/tasks');
-                      } else {
-                        context.go('/sign-in');
-                      }
-                    } on DioException catch(e) {
-                      showDialog(
-                          useSafeArea: true,
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text('Error'),
-                              content: Text('Error!\n${e.response?.statusCode}: ${e.response?.statusMessage}'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text('Return'),
-                                )
-                              ],
-                            );
-                          });
-                    }
-                  },
+                    tokenState.when(
+                        data: (data) => {
+                          if(data == true) {
+                            context.go('/tasks')
+                          } else {
+                            context.go('/sign-in')
+                          }
+                        },
+                        error: (error, stackTrace) {
+                          if(error is DioException) {
+                            if(error.response?.statusCode == 401) {
+                              context.go('/sign-in');
+                            } else {
+                              showDialog(
+                                  useSafeArea: true,
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text('Error'),
+                                      content: Text('Error!\n${error.response?.statusCode}: ${error.response?.statusMessage}'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: const Text('Return'),
+                                        )
+                                      ],
+                                    );
+                                  });
+                            }
+                          }
+                        },
+                        loading: () => const CircularProgressIndicator());
+                    },
+                    // var service = await ApiService.create();
+                    // try {
+                      // var isLoggedIn = await service.checkToken();
+                      // if (isLoggedIn) {
+                      //   context.go('/tasks');
+                      // } else {
+                      //   context.go('/sign-in');
+                      // }
+                    // } on DioException catch(e) {
+                    //
+                    // }
+                  // },
                   child: Container(
                     width: double.infinity,
                     height: 60,
