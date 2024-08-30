@@ -8,9 +8,9 @@ import '../../model/task put/task_put.dart';
 import '../../model/task/task.dart';
 
 class TaskService {
-  final Dio dio;
+  final Dio _dio;
 
-  TaskService(this.dio);
+  TaskService(this._dio);
 
   List<TaskData> fetchData(List<TaskData> local, List<TaskData> server) {
     List<TaskData> data = [];
@@ -76,7 +76,7 @@ class TaskService {
     List<TaskData> tasks;
     Response<dynamic> response;
     try {
-      response = await dio.get(
+      response = await _dio.get(
         '/tasks',
       );
       tasks = (response.data['items'] as List)
@@ -101,7 +101,7 @@ class TaskService {
     Response<dynamic> response;
     TaskData newTask;
     try {
-      response = await dio.post('/tasks', data: task);
+      response = await _dio.post('/tasks', data: task);
       newTask = TaskData.fromJson(response.data);
       newTask.syncStatus = SyncStatus.BOTH;
       Hive.box<TaskData>('taskBox').put(newTask.sid, newTask);
@@ -120,7 +120,7 @@ class TaskService {
           text: task.text,
           tagSid: task.tag.sid,
           priority: task.priority);
-      response = await dio.post('/tasks', data: taskPost);
+      response = await _dio.post('/tasks', data: taskPost);
       newTask = TaskData.fromJson(response.data);
       newTask.syncStatus = SyncStatus.BOTH;
       Hive.box<TaskData>('taskBox').delete(task.sid);
@@ -152,7 +152,7 @@ class TaskService {
           isDone: task.isDone,
           tagSid: task.tag.sid,
           priority: task.priority);
-      response = await dio.put('/tasks', data: taskPut);
+      response = await _dio.put('/tasks', data: taskPut);
       newTask = TaskData.fromJson(response.data);
       newTask.syncStatus = SyncStatus.BOTH;
       Hive.box<TaskData>('taskBox').put(newTask.sid, newTask);
@@ -166,7 +166,7 @@ class TaskService {
     Response<dynamic> response;
     TaskData newTask;
     try {
-      response = await dio.put('/tasks', data: task);
+      response = await _dio.put('/tasks', data: task);
       newTask = TaskData.fromJson(response.data);
       Hive.box<TaskData>('taskBox').put(newTask.sid, newTask);
       return newTask;
@@ -177,7 +177,7 @@ class TaskService {
 
   Future<void> deleteTask(String sid) async {
     try {
-      await dio.delete('/tasks', queryParameters: {'taskSid': sid});
+      await _dio.delete('/tasks', queryParameters: {'taskSid': sid});
       Hive.box<TaskData>('taskBox').delete(sid);
     } on DioException catch (e) {
       rethrow;

@@ -13,10 +13,10 @@ import '../model/priority/priority.dart';
 import '../model/tag/tag.dart';
 
 class AddTaskPage extends ConsumerStatefulWidget {
-  const AddTaskPage({super.key, required this.title, this.task});
+  const AddTaskPage({super.key, required String title, TaskData? task}) : _task = task, _title = title;
 
-  final String title;
-  final TaskData? task;
+  final String _title;
+  final TaskData? _task;
 
   @override
   ConsumerState<AddTaskPage> createState() => _AddTaskPageState();
@@ -56,26 +56,26 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     //WidgetsBinding.instance.addPersistentFrameCallback((_) {
-      if (widget.task != null) {
-          _nameController.text = widget.task!.title;
-          _descriptionController.text = widget.task!.text;
+      if (widget._task != null) {
+          _nameController.text = widget._task!.title;
+          _descriptionController.text = widget._task!.text;
           _tagController = Hive
               .box<TagData>('tagBox')
               .values
-              .firstWhere((item) => item.sid == widget.task!.tag.sid);
+              .firstWhere((item) => item.sid == widget._task!.tag.sid);
 
           _dateStart =
-              widget.task!.createdAt!.toLocal().add(
+              widget._task!.createdAt!.toLocal().add(
                   const Duration(minutes: 180));
           TimeOfDay time = TimeOfDay(
               hour: _dateStart.hour, minute: _dateStart.minute);
           _timeStart = time;
 
-          _priorityController = widget.task!.priority;
+          _priorityController = widget._task!.priority;
 
-          if (widget.task?.finishAt != null) {
+          if (widget._task?.finishAt != null) {
             _deadlineCheck = true;
-            DateTime endDate = widget.task!.finishAt!.add(
+            DateTime endDate = widget._task!.finishAt!.add(
                 const Duration(minutes: 180));
             // offset = widget.task!.finishAt!.toLocal().timeZoneOffset.inMinutes;
             _dateEndController.text = DateFormat('dd/MM/yyyy')
@@ -93,12 +93,11 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).canvasColor,
-          title: Text(widget.title),
+          title: Text(widget._title),
           leading: IconButton(
               onPressed: () => {context.go('/tasks')},
               icon: const Icon(
-                Icons.arrow_back_ios,
-                size: 30,
+                Icons.arrow_back_ios_outlined,
               )),
         ),
         body: Center(
@@ -246,7 +245,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
                   try {
-                    if (widget.task != null) {
+                    if (widget._task != null) {
                       updateTask();
                     } else {
                       createTask();
@@ -258,7 +257,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                           return AlertDialog(
                             title: const Text('Success'),
                             content:  Text(
-                                widget.task != null ? 'Changes saved' : 'New task added'),
+                                widget._task != null ? 'Changes saved' : 'New task added'),
                             actions: [
                               TextButton(
                                 onPressed: () {
@@ -278,7 +277,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                 }
               },
               child: Text(
-                widget.task != null ? 'Save' : 'Create',
+                widget._task != null ? 'Save' : 'Create',
                 style: const TextStyle(
                     fontWeight: FontWeight.w400,
                     fontSize: 20),
@@ -499,14 +498,14 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
 
   void updateTask() {
     TaskPutData task = TaskPutData(
-        sid: widget.task!.sid!,
+        sid: widget._task!.sid!,
         title: _nameController.text,
         text: _descriptionController
             .text,
-        isDone: widget.task!.isDone,
+        isDone: widget._task!.isDone,
         tagSid: _tagController.sid,
         priority: _priorityController,
-        syncStatus: widget.task!.syncStatus);
+        syncStatus: widget._task!.syncStatus);
     if (_dateEndController.text
         .isNotEmpty) {
       task.finishAt =

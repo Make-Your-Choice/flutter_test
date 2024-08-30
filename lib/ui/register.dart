@@ -9,9 +9,9 @@ import '../model/user/user.dart';
 
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key, required this.title});
+  const RegisterPage({super.key, required String title}) : _title = title;
 
-  final String title;
+  final String _title;
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -36,7 +36,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        title: Text(widget.title),
+        title: Text(widget._title),
       ),
       body: Center(
           child: SizedBox(

@@ -4,15 +4,15 @@ part 'connection_state_provider.g.dart';
 
 @Riverpod()
 class ConnectionState extends _$ConnectionState {
-  bool connectionState = true;
+  bool _connectionState = true;
 
   @override
   FutureOr<bool> build() {
-    return connectionState;
+    return _connectionState;
   }
 
   Future<void> fetchNewState(bool newState) async {
-    connectionState = newState;
+    _connectionState = newState;
     ref.invalidateSelf();
     await future;
   }

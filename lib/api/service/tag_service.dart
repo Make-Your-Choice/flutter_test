@@ -4,14 +4,14 @@ import 'package:hive/hive.dart';
 import '../../model/tag/tag.dart';
 
 class TagService {
-  final Dio dio;
-  TagService(this.dio);
+  final Dio _dio;
+  TagService(this._dio);
 
   Future<List<TagData>> getTags() async {
     List<TagData> tags;
     Response<dynamic> response;
     try {
-      response = await dio.get(
+      response = await _dio.get(
         '/tags',
       );
       tags = (response.data['items'] as List)

@@ -9,8 +9,8 @@ import '../../model/token/token.dart';
 import '../../model/user login/user_login.dart';
 
 class TokenService {
-  final Dio dio;
-  TokenService(this.dio);
+  final Dio _dio;
+  TokenService(this._dio);
 
   Future<Token> logIn(UserLogin userLogin) async {
     FlutterSecureStorage storage = const FlutterSecureStorage();
@@ -50,7 +50,7 @@ class TokenService {
     FlutterSecureStorage storage = const FlutterSecureStorage();
     Response<dynamic> response;
     try {
-      response = await dio.post(
+      response = await _dio.post(
           '/logout'
       );
       if (response.statusCode == 200) {
@@ -68,7 +68,7 @@ class TokenService {
     Response<dynamic> response;
     try {
       if (await storage.containsKey(key: 'access_token')) {
-        response = await dio.get('/users/me');
+        response = await _dio.get('/users/me');
         if (response.statusCode == 200) {
           return true;
         } else {
