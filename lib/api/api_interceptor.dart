@@ -8,16 +8,17 @@ import '../model/token/token.dart';
 
 class ApiInterceptor extends Interceptor {
 
-  Future<Token> get authToken async {
-    Storage.FlutterSecureStorage storage = const Storage.FlutterSecureStorage();
-    String? acsToken = await storage.read(key: 'access_token');
-    String? refToken = await storage.read(key: 'refresh_token');
-    return Token(acsToken!, refToken!);
-  }
+  // Future<Token> get authToken async {
+  //   Storage.FlutterSecureStorage storage = const Storage.FlutterSecureStorage();
+  //   String? acsToken = await storage.read(key: 'access_token');
+  //   String? refToken = await storage.read(key: 'refresh_token');
+  //   return Token(acsToken!, refToken!);
+  // }
 
   @override
   Future<void> onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
+    super.onRequest(options, handler);
     try {
       Storage.FlutterSecureStorage storage = const Storage
           .FlutterSecureStorage();
@@ -29,20 +30,31 @@ class ApiInterceptor extends Interceptor {
         options.headers.addAll({
           'Authorization': 'Bearer ${token.accessToken}',
         });
-        return super.onRequest(options, handler);
+        // return handler.next(options);
       } else {
-        throw DioException(requestOptions: options, response: Response(
+        throw DioException(
                 requestOptions: options,
-                statusCode: 500,
-                statusMessage: 'Token does not exist!'));
+                response: Response(
+                    requestOptions: options,
+                  statusCode: 401,
+                  statusMessage: 'Token is not found'
+                ),
+            );
+          }
+      }
+      // else {
+      //   throw DioException(requestOptions: options, response: Response(
+      //           requestOptions: options,
+      //           statusCode: 500,
+      //           statusMessage: 'Token does not exist!'));
+       
         // throw DioException(
         //     requestOptions: RequestOptions(),
         //     response: Response(
         //         requestOptions: RequestOptions(),
         //         statusCode: 500,
         //         statusMessage: 'Token does not exist!'));
-      }
-    } on DioException catch (e) {
+       on DioException catch (e) {
       print(e.response);
       rethrow;
     }
@@ -59,30 +71,33 @@ class ApiInterceptor extends Interceptor {
   Future<void> onError(
       DioException err, ErrorInterceptorHandler handler) async {
     super.onError(err, handler);
-    print('onErr: ${err.response!}');
-    if (err.response?.data['code'] == 1 ||
-        err.response?.data['code'] == 2 ||
-        err.response?.data['code'] == 101 ||
-        err.response?.statusCode == 401) {
+    print('Error: ${err.response?.statusCode} - ${err.response?.statusMessage}');
+    // if(err.type == DioExceptionType.connectionError) {
+    //   throw err;
+    // }
       if (err.response?.data['code'] == 1) {
         await disposeToken();
-      }else if(err.response?.data['code'] == 101 ||
-          err.response?.statusCode == 401) {
-        ApiService service = await ApiService.create();
-        await service.logOut();
-        // handler.next(err);
-      } else if (err.response?.data['code'] == 2) {
+      }
+      // else if(err.response?.statusCode == 401) {
+      //   throw DioException(
+      //       requestOptions: err.requestOptions,
+      //       response: Response(
+      //           requestOptions: err.requestOptions,
+      //         statusCode: 401,
+      //         statusMessage: 'Token is invalid'
+      //       ),
+      //   );
+      // }
+      else if (err.response?.data['code'] == 2 || err.response?.data['code'] == 101) {
         try {
           await refreshToken();
           return handler.resolve(await _retryRequest(err.requestOptions));
         } on DioException catch (e) {
-          print('onErrErr: ${e.response?.statusCode}');
-          // handler.reject(err);
-          // handler.next(e);
+          print('Error retry: ${e.response?.statusCode} - ${e.response?.statusMessage}');
         }
       }
-      return;
-    }
+      //return;
+    // }
     handler.next(err);
   }
 
@@ -140,7 +155,12 @@ class ApiInterceptor extends Interceptor {
   }
 
   Future<Response<dynamic>> _retryRequest(RequestOptions requestOptions) async {
-    Token token = await authToken;
+    Storage.FlutterSecureStorage storage = const Storage
+        .FlutterSecureStorage();
+    String? acsToken = await storage.read(key: 'access_token');
+    String? refToken = await storage.read(key: 'refresh_token');
+    Token token = Token(acsToken!, refToken!);
+    // Token token = await authToken;
     final options = Options(
         method: requestOptions.method,
         headers: {'Authorization': 'Bearer $token'});

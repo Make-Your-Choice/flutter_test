@@ -6,7 +6,7 @@ part of 'provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$taskHash() => r'4088145327de9af55a2bf4299ef54584e9ec903c';
+String _$taskHash() => r'fa13c4c4ad2e17ed948e46b6406431a659085c4c';
 
 /// See also [Task].
 @ProviderFor(Task)
@@ -36,7 +36,7 @@ final tagProvider =
 );
 
 typedef _$Tag = AutoDisposeAsyncNotifier<List<TagData>>;
-String _$tokenStateHash() => r'52cced2646c5dd6ad62ea2501b021f6237bb156c';
+String _$tokenStateHash() => r'9cb6911b29dfea9fef24114905d0b5283461ef14';
 
 /// See also [TokenState].
 @ProviderFor(TokenState)
@@ -51,5 +51,21 @@ final tokenStateProvider =
 );
 
 typedef _$TokenState = AutoDisposeAsyncNotifier<bool>;
+String _$connectionStateHash() => r'22fe0ea6cba4d2cc0079ed04f812534f4117c82b';
+
+/// See also [ConnectionState].
+@ProviderFor(ConnectionState)
+final connectionStateProvider =
+    AutoDisposeAsyncNotifierProvider<ConnectionState, bool>.internal(
+  ConnectionState.new,
+  name: r'connectionStateProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$connectionStateHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ConnectionState = AutoDisposeAsyncNotifier<bool>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

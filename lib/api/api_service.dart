@@ -23,6 +23,9 @@ class ApiService {
   static Future<ApiService> create() async {
     var service = ApiService._create();
     dio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 5),
+        sendTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 5),
         baseUrl: 'https://test-mobile.estesis.tech/api/v1',
         headers: {
           HttpHeaders.contentTypeHeader: 'application/json',
@@ -53,9 +56,10 @@ class ApiService {
         }
       }
     }
-    server.removeWhere((item) => item.syncStatus == SyncStatus.BOTH);
-    data = {...local, ...server}.toList();
-    data.sort((a, b) => a.syncStatus == SyncStatus.BOTH ? 1 : -1);
+    // server.removeWhere((item) => item.syncStatus == SyncStatus.BOTH);
+    // data = {...local, ...server}.toList();
+    data = local;
+    data.sort((a, b) => a.syncStatus == SyncStatus.LOCAL_ONLY ? -1 : 1);
     return data;
   }
 
@@ -66,36 +70,20 @@ class ApiService {
       response = await dio.get(
         '/tasks',
       );
-      if (response.statusCode == 200) {
-        tasks = (response.data['items'] as List)
-            .map((i) => TaskData.fromJson(i))
-            .toList();
+      tasks = (response.data['items'] as List)
+          .map((i) => TaskData.fromJson(i))
+          .toList();
 
-        if (Hive.box<TaskData>('taskBox').isEmpty) {
-          for (var item in tasks) {
-            Hive.box<TaskData>('taskBox').put(item.sid, item);
-          }
-          // Hive.box<TaskData>('taskBox').addAll(tasks);
-        } else {
-          List<TaskData> taskDataList =
-              Hive.box<TaskData>('taskBox').values.toList();
-          tasks = fetchData(taskDataList, tasks);
+      if (Hive.box<TaskData>('taskBox').isEmpty) {
+        for (var item in tasks) {
+          Hive.box<TaskData>('taskBox').put(item.sid, item);
         }
-
-        return tasks;
-      } else if (response.statusCode == 500 ||
-          response.statusCode == 503 ||
-          response.statusCode == 504) {
-        return Hive.box<TaskData>('taskBox').values.toList();
       } else {
-        // throw Exception('Tasks not found!');
-        throw DioException(
-            requestOptions: RequestOptions(),
-            response: Response(
-                requestOptions: RequestOptions(),
-                statusCode: 404,
-                statusMessage: 'Tasks not found'));
+        List<TaskData> taskDataList =
+        Hive.box<TaskData>('taskBox').values.toList();
+        tasks = fetchData(taskDataList, tasks);
       }
+      return tasks;
     } on DioException catch (e) {
       rethrow;
     }
@@ -146,7 +134,7 @@ class ApiService {
     TaskData newTask;
     try {
       response = await dio.post('/tasks', data: taskPost);
-      if (response.statusCode == 200) {
+      // if (response.statusCode == 200) {
         newTask = TaskData.fromJson(response.data);
         newTask.syncStatus = SyncStatus.BOTH;
         Hive.box<TaskData>('taskBox').delete(task.sid);
@@ -157,19 +145,11 @@ class ApiService {
             text: newTask.text,
             isDone: newTask.isDone,
             tagSid: newTask.tag.sid,
-            priority: newTask.priority);
+            priority: newTask.priority,
+          syncStatus: newTask.syncStatus
+        );
         newTask = await putTask(taskPut);
-        // TaskPutData taskPut = TaskPutData(sid, title, text, isDone, tagSid, syncStatus)
         return newTask;
-      } else {
-        throw DioException(
-            requestOptions: RequestOptions(),
-            response: Response(
-                requestOptions: RequestOptions(),
-                statusCode: 500,
-                statusMessage: 'Could not repost task'));
-        // throw Exception('Could not create task!');
-      }
     } on DioException catch (e) {
       rethrow;
     }
@@ -178,56 +158,38 @@ class ApiService {
   Future<TaskData> putTask(TaskPutData task) async {
     Response<dynamic> response;
     TaskData newTask;
-    if(task.syncStatus == SyncStatus.BOTH) {
       try {
         response = await dio.put('/tasks', data: task);
-        if (response.statusCode == 200) {
           newTask = TaskData.fromJson(response.data);
-
           Hive.box<TaskData>('taskBox').put(newTask.sid, newTask);
-
           return newTask;
-        } else if (response.statusCode == 500 ||
-            response.statusCode == 503 ||
-            response.statusCode == 504) {
-          TagData? tag = Hive.box<TagData>('tagBox').get(task.tagSid);
-
-          TaskData? localTask = Hive.box<TaskData>('taskBox').get(task.sid);
-
-          localTask?.title = task.title;
-          localTask?.text = task.text;
-          localTask?.finishAt = task.finishAt;
-          localTask?.priority = task.priority;
-          localTask?.tag = tag!;
-          localTask?.isDone = task.isDone;
-
-          Hive.box<TaskData>('taskBox').put(localTask?.sid, localTask!);
-          return localTask;
-        } else {
-          throw DioException(
-              requestOptions: RequestOptions(),
-              response: Response(
-                  requestOptions: RequestOptions(),
-                  statusCode: 500,
-                  statusMessage: 'Could not update! Task not found!'));
-        }
+       // } else if (response.statusCode == 500 ||
+            //response.statusCode == 503 ||
+            //response.statusCode == 504) {
+        //   TagData? tag = Hive.box<TagData>('tagBox').get(task.tagSid);
+        //
+        //   TaskData? localTask = Hive.box<TaskData>('taskBox').get(task.sid);
+        //
+        //   localTask?.title = task.title;
+        //   localTask?.text = task.text;
+        //   localTask?.finishAt = task.finishAt;
+        //   localTask?.priority = task.priority;
+        //   localTask?.tag = tag!;
+        //   localTask?.isDone = task.isDone;
+        //
+        //   Hive.box<TaskData>('taskBox').put(localTask?.sid, localTask!);
+        //   return localTask;
+        // } else {
+        //   throw DioException(
+        //       requestOptions: RequestOptions(),
+        //       response: Response(
+        //           requestOptions: RequestOptions(),
+        //           statusCode: 500,
+        //           statusMessage: 'Could not update! Task not found!'));
+        //}
       } on DioException catch (e) {
         rethrow;
       }
-    } else {
-      TagData? tag = Hive.box<TagData>('tagBox').get(task.tagSid);
-      TaskData? localTask = Hive.box<TaskData>('taskBox').get(task.sid);
-
-      localTask?.title = task.title;
-      localTask?.text = task.text;
-      localTask?.finishAt = task.finishAt;
-      localTask?.priority = task.priority;
-      localTask?.tag = tag!;
-      localTask?.isDone = task.isDone;
-
-      Hive.box<TaskData>('taskBox').put(localTask?.sid, localTask!);
-      return localTask;
-    }
   }
 
   Future<void> deleteTask(String sid) async {
@@ -388,5 +350,21 @@ class ApiService {
     String? acsToken = await storage.read(key: 'access_token');
     String? refToken = await storage.read(key: 'refresh_token');
     return Token(acsToken!, refToken!);
+  }
+
+  TaskData putTaskLocal(TaskPutData task) {
+    TagData? tag = Hive.box<TagData>('tagBox').get(task.tagSid);
+    TaskData? localTask = Hive.box<TaskData>('taskBox').get(task.sid);
+
+    localTask?.title = task.title;
+    localTask?.text = task.text;
+    localTask?.finishAt = task.finishAt;
+    localTask?.priority = task.priority;
+    localTask?.tag = tag!;
+    localTask?.isDone = task.isDone;
+    localTask?.syncStatus = SyncStatus.LOCAL_ONLY;
+
+    Hive.box<TaskData>('taskBox').put(localTask?.sid, localTask!);
+    return localTask;
   }
 }

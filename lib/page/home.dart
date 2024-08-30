@@ -116,7 +116,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   height: 70,
                 ),
                 GestureDetector(
-                  onTap: () async {
+                  onTap: () {
                     tokenState.when(
                         data: (data) => {
                           if(data == true) {
@@ -127,7 +127,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         },
                         error: (error, stackTrace) {
                           if(error is DioException) {
-                            if(error.response?.statusCode == 401) {
+                            if(error.response?.statusCode == 401 || error.response?.data['code'] == 101) {
                               context.go('/sign-in');
                             } else {
                               showDialog(
