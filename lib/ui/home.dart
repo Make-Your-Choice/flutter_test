@@ -2,12 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
-import 'package:project1/api/provider.dart';
 
-import '../api/api_service.dart';
-
+import '../api/provider/token state/token_state_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});

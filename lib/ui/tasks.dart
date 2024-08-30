@@ -5,11 +5,13 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:project1/api/provider.dart';
 import 'package:project1/model/sync%20status/sync_status.dart';
-import 'package:project1/model/task%20post/task_post.dart';
 import 'package:project1/model/task/task.dart';
 
+import '../api/provider/connection state/connection_state_provider.dart';
+import '../api/provider/tag/tag_provider.dart';
+import '../api/provider/task/task_provider.dart';
+import '../api/provider/token state/token_state_provider.dart';
 import '../model/tag/tag.dart';
 import '../model/task put/task_put.dart';
 
@@ -39,9 +41,7 @@ class _TaskPageState extends ConsumerState<TasksPage> {
     var taskData = ref.watch(taskProvider);
     var tagData = ref.watch(tagProvider);
     var tokenState = ref.watch(tokenStateProvider);
-    // var offlineData = ref.watch(taskProvider(isOffline: true));
     var connectionState = ref.watch(connectionStateProvider);
-    // var connectionP = ref.watch(connectionStateP);
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).canvasColor,
@@ -54,25 +54,25 @@ class _TaskPageState extends ConsumerState<TasksPage> {
                   }
                 } on DioException catch(e) {
                   if(e.type == DioExceptionType.connectionError) {
-                    showDialog(
-                        useSafeArea: true,
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Error'),
-                            content: Text('Connection lost!\n${e.response?.statusCode}: ${e.response?.statusMessage}'),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Return'),
-                              )
-                            ],
-                          );
-                        });
+                    // showDialog(
+                    //     useSafeArea: true,
+                    //     context: context,
+                    //     builder: (BuildContext context) {
+                    //       return AlertDialog(
+                    //         title: const Text('Error'),
+                    //         content: Text('Connection lost!\n${e.response?.statusCode}: ${e.response?.statusMessage}'),
+                    //         actions: [
+                    //           TextButton(
+                    //             onPressed: () {
+                    //               Navigator.pop(context);
+                    //             },
+                    //             child: const Text('Return'),
+                    //           )
+                    //         ],
+                    //       );
+                    //     });
                   }
-                  else if(e.response?.statusCode == 401) {
+                  else if(e.response?.statusCode == 401 || e.type == DioExceptionType.badResponse) {
                     context.go('/sign-in');
                   }
                   showDialog(
@@ -105,24 +105,14 @@ class _TaskPageState extends ConsumerState<TasksPage> {
                   Icons.add,
                   size: 30,
                 )),
-            // IconButton(
-            //     onPressed: () => { ref.watch(connectionStateP.notifier).changeState(!connectionP)},
-            //     icon: Icon(
-            //       connectionP ? Icons.wifi : Icons.wifi_off,
-            //       size: 30,
-            //     )),
-
-
             connectionState.when(
-                data: (data) {
-                  return
+                data: (data) =>
                   IconButton(
                       onPressed: () => {},
                       icon: Icon(
                         data ? Icons.wifi : Icons.wifi_off,
                         size: 30,
-                      )) ;
-                },
+                      )),
                 error: (error, stackTrace) => Text(error.toString()),
                 loading: () => const CircularProgressIndicator()),
 
@@ -131,7 +121,6 @@ class _TaskPageState extends ConsumerState<TasksPage> {
         body: Consumer(builder: (context, ref, child) {
           return RefreshIndicator(
               onRefresh: () async {
-
                 tokenState.when(
                     data: (data) => {
                       if(data == false) {
@@ -142,35 +131,7 @@ class _TaskPageState extends ConsumerState<TasksPage> {
                       processTokenStateErrors(error, stackTrace);
                     },
                     loading: () => const CircularProgressIndicator());
-
-                // var service = await ApiService.create();
-                // try {
-                //   var isLoggedIn = await service.checkToken();
-                //   if (!isLoggedIn) {
-                //     context.go('/sign-in');
-                //   }
-                // } on DioException catch(e) {
-                //   showDialog(
-                //       useSafeArea: true,
-                //       context: context,
-                //       builder: (BuildContext context) {
-                //         return AlertDialog(
-                //           title: const Text('Error'),
-                //           content: Text('Error!\n${e.response?.statusCode}: ${e.response?.statusMessage}'),
-                //           actions: [
-                //             TextButton(
-                //               onPressed: () {
-                //                 Navigator.pop(context);
-                //               },
-                //               child: const Text('Return'),
-                //             )
-                //           ],
-                //         );
-                //       });
-                // }
-
                 return ref.refresh(taskProvider.future);
-
                 },
           child: SingleChildScrollView(
             child: Column(
@@ -249,13 +210,13 @@ class _TaskPageState extends ConsumerState<TasksPage> {
                           //     :  Text('$error');
 
                           if (error is DioException) {
-                            if(error.response?.statusCode == 401) {
+                            // if(error.response?.statusCode == 401 || error.type == DioExceptionType.badResponse) {
                               context.go('/sign-in');
-                            } else {
-                              return Text('Error! ${error.response
-                                  ?.statusCode}: ${error.response
-                                  ?.statusMessage}');
-                            }
+                            // } else {
+                            //   return Text('Error! ${error.response
+                            //       ?.statusCode}: ${error.response
+                            //       ?.statusMessage}');
+                            // }
                           }
                           return null;
                         },
@@ -282,11 +243,6 @@ class _TaskPageState extends ConsumerState<TasksPage> {
               _showFilters = !_showFilters;
             });
           },
-          // onTapOutside: (event) {
-          //   setState(() {
-          //     _showFilters = false;
-          //   });
-          // },
           controller: _searchController,
           shadowColor:
           const WidgetStatePropertyAll(Colors.transparent),
@@ -377,19 +333,20 @@ class _TaskPageState extends ConsumerState<TasksPage> {
   }
 
   Widget taskDataWidget(List<TaskData> data) {
-    for(var item in data) {
-      int offset = item.createdAt!.toLocal().timeZoneOffset.inMinutes;
-      item.createdAt!.toLocal().add(Duration(days: offset));
-    }
-    data = data.where((item) => item.createdAt?.toLocal().day == _selectedDate.day &&
-        item.createdAt?.toLocal().month == _selectedDate.month &&
-        item.createdAt?.toLocal().year == _selectedDate.year).toList();
-    if(_searchController.text.isNotEmpty) {
-      data = data.where((item) => item.title.contains(_searchController.text)).toList();
-    }
-    if(_selectedFilter.isNotEmpty) {
-      data = data.where((item) => item.tag.sid.contains(_selectedFilter)).toList();
-    }
+    // for(var item in data) {
+    //   int offset = item.createdAt!.toLocal().timeZoneOffset.inMinutes;
+    //   item.createdAt!.toLocal().add(Duration(days: offset));
+    // }
+    // data = data.where((item) => item.createdAt?.toLocal().day == _selectedDate.day &&
+    //     item.createdAt?.toLocal().month == _selectedDate.month &&
+    //     item.createdAt?.toLocal().year == _selectedDate.year).toList();
+    // if(_searchController.text.isNotEmpty) {
+    //   data = data.where((item) => item.title.contains(_searchController.text)).toList();
+    // }
+    // if(_selectedFilter.isNotEmpty) {
+    //   data = data.where((item) => item.tag.sid.contains(_selectedFilter)).toList();
+    // }
+    data = filterData(data);
     return ListView.builder(
         padding:
         const EdgeInsets.symmetric(vertical: 30),
@@ -574,12 +531,7 @@ class _TaskPageState extends ConsumerState<TasksPage> {
         ),
         onPressed: () {
           if(task.syncStatus == SyncStatus.LOCAL_ONLY) {
-            TaskPostData taskPost = TaskPostData(
-                title: task.title,
-                text: task.text,
-                tagSid: task.tag.sid,
-                priority: task.priority);
-            ref.watch(taskProvider.notifier).retryCreateTask(taskPost, task);
+            ref.watch(taskProvider.notifier).retryTask(task);
           } else if(task.syncStatus == SyncStatus.SERVER_ONLY) {
             ref.watch(taskProvider.notifier).deleteTask(task.sid!);
           }}
@@ -614,12 +566,8 @@ class _TaskPageState extends ConsumerState<TasksPage> {
 
   void processTokenStateErrors(Object error, StackTrace stackTrace) {
     if(error is DioException) {
-      if(error.response?.statusCode == 401) {
+      if(error.response?.statusCode == 401 || error.type == DioExceptionType.badResponse) {
         context.go('/sign-in');
-      // } else if (error.type == DioExceptionType.connectionError) {
-      //   setState(() {
-      //     isOffline = true;
-      //   });
       } else {
         showDialog(
             useSafeArea: true,
@@ -640,5 +588,22 @@ class _TaskPageState extends ConsumerState<TasksPage> {
             });
       }
     }
+  }
+
+  List<TaskData> filterData (List<TaskData> data) {
+    for(var item in data) {
+      int offset = item.createdAt!.toLocal().timeZoneOffset.inMinutes;
+      item.createdAt!.toLocal().add(Duration(days: offset));
+    }
+    data = data.where((item) => item.createdAt?.toLocal().day == _selectedDate.day &&
+        item.createdAt?.toLocal().month == _selectedDate.month &&
+        item.createdAt?.toLocal().year == _selectedDate.year).toList();
+    if(_searchController.text.isNotEmpty) {
+      data = data.where((item) => item.title.contains(_searchController.text)).toList();
+    }
+    if(_selectedFilter.isNotEmpty) {
+      data = data.where((item) => item.tag.sid.contains(_selectedFilter)).toList();
+    }
+    return data;
   }
 }

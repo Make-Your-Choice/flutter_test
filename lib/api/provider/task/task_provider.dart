@@ -1,17 +1,18 @@
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
-import 'package:project1/api/api_service.dart';
-import 'package:project1/model/sync%20status/sync_status.dart';
-import 'package:project1/model/task%20put/task_put.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../model/tag/tag.dart';
-import '../model/task post/task_post.dart';
-import '../model/task/task.dart';
+import '../../../model/sync status/sync_status.dart';
+import '../../../model/task post/task_post.dart';
+import '../../../model/task put/task_put.dart';
+import '../../../model/task/task.dart';
+import '../../service/api_service.dart';
+import '../connection state/connection_state_provider.dart';
+import '../token state/token_state_provider.dart';
 
-part 'provider.g.dart';
+part 'task_provider.g.dart';
 
-@riverpod
+@Riverpod()
 class Task extends _$Task {
   // late ApiService service;
 
@@ -19,8 +20,6 @@ class Task extends _$Task {
   Future<List<TaskData>> build() async {
     return fetchTasks();
   }
-
-  // Future<ApiService> get service async => await ApiService.create();
 
   Future<List<TaskData>> fetchTasks() async {
     List<TaskData> content;
@@ -84,10 +83,54 @@ class Task extends _$Task {
     await future;
   }
 
-  Future<void> retryCreateTask(TaskPostData taskPost, TaskData task) async {
+  Future<void> retryTask(TaskData task) async {
+    try {
+      if(task.sid!.length < 32) {
+        await retryCreateTask(task);
+      } else {
+        await retryUpdateTask(task);
+      }
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        ref.watch(connectionStateProvider.notifier).fetchNewState(false);
+        rethrow;
+      } else if (e.response?.statusCode == 401) {
+        ref.watch(tokenStateProvider.notifier).checkToken();
+        rethrow;
+      } else {
+        rethrow;
+      }
+    }
+    ref.invalidateSelf();
+    await future;
+  }
+
+  Future<void> retryCreateTask(TaskData task) async {
     var service = await ApiService.create();
     try {
-      await service.retryPostTask(taskPost, task);
+      await service.retryPostTask(task);
+      ref.watch(connectionStateProvider.notifier).fetchNewState(true);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        ref.watch(connectionStateProvider.notifier).fetchNewState(false);
+        rethrow;
+      } else if (e.response?.statusCode == 401) {
+        ref.watch(tokenStateProvider.notifier).checkToken();
+        rethrow;
+      } else {
+        rethrow;
+      }
+    }
+    ref.invalidateSelf();
+    await future;
+  }
+
+  Future<void> retryUpdateTask(TaskData task) async {
+    var service = await ApiService.create();
+    try {
+      await service.retryPutTask(task);
       ref.watch(connectionStateProvider.notifier).fetchNewState(true);
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout ||
@@ -117,62 +160,6 @@ class Task extends _$Task {
         Hive.box<TaskData>('taskBox').delete(sid);
       }
     }
-    ref.invalidateSelf();
-    await future;
-  }
-}
-
-@Riverpod()
-class Tag extends _$Tag {
-  @override
-  Future<List<TagData>> build() async {
-    return fetchTags();
-  }
-
-  Future<List<TagData>> fetchTags() async {
-    var service = await ApiService.create();
-    final List<TagData> content = await service.getTags();
-    // ref.invalidateSelf();
-    // await future;
-    return content;
-  }
-}
-
-@Riverpod()
-class TokenState extends _$TokenState {
-  @override
-  Future<bool> build() async {
-    return checkToken();
-  }
-
-  Future<bool> checkToken() async {
-    try {
-      var service = await ApiService.create();
-      bool isPresent = await service.checkToken();
-      return isPresent;
-    } on DioException catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<bool> logOut() async {
-    var service = await ApiService.create();
-    bool isLoggedOut = await service.logOut();
-    return isLoggedOut;
-  }
-}
-
-@riverpod
-class ConnectionState extends _$ConnectionState {
-  bool connectionState = true;
-
-  @override
-  FutureOr<bool> build() {
-    return connectionState;
-  }
-
-  Future<void> fetchNewState(bool newState) async {
-    connectionState = newState;
     ref.invalidateSelf();
     await future;
   }

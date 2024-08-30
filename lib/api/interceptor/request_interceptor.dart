@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as Storage;
-import 'package:project1/api/api_service.dart';
+import 'package:project1/api/service/api_service.dart';
 
-import '../model/token/token.dart';
+import '../../model/token/token.dart';
 
-class ApiInterceptor extends Interceptor {
+class RequestInterceptor extends Interceptor {
 
   // Future<Token> get authToken async {
   //   Storage.FlutterSecureStorage storage = const Storage.FlutterSecureStorage();
@@ -40,20 +40,7 @@ class ApiInterceptor extends Interceptor {
                 ),
             );
           }
-      }
-      // else {
-      //   throw DioException(requestOptions: options, response: Response(
-      //           requestOptions: options,
-      //           statusCode: 500,
-      //           statusMessage: 'Token does not exist!'));
-       
-        // throw DioException(
-        //     requestOptions: RequestOptions(),
-        //     response: Response(
-        //         requestOptions: RequestOptions(),
-        //         statusCode: 500,
-        //         statusMessage: 'Token does not exist!'));
-       on DioException catch (e) {
+      } on DioException catch (e) {
       print(e.response);
       rethrow;
     }
@@ -71,6 +58,7 @@ class ApiInterceptor extends Interceptor {
       DioException err, ErrorInterceptorHandler handler) async {
     super.onError(err, handler);
     print('Error: ${err.response?.statusCode} - ${err.response?.statusMessage}');
+
       if (err.response?.data['code'] == 1) {
         await disposeToken();
       }
@@ -90,7 +78,8 @@ class ApiInterceptor extends Interceptor {
           return handler.resolve(await _retryRequest(err.requestOptions));
         } on DioException catch (e) {
           print('Error retry: ${e.response?.statusCode} - ${e.response?.statusMessage}');
-          rethrow;
+          //rethrow;
+          handler.next(e);
         }
       }
       //return;

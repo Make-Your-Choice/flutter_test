@@ -8,7 +8,7 @@ import 'package:project1/model/task%20post/task_post.dart';
 import 'package:project1/model/task%20put/task_put.dart';
 import 'package:project1/model/task/task.dart';
 
-import '../api/provider.dart';
+import '../api/provider/task/task_provider.dart';
 import '../model/priority/priority.dart';
 import '../model/tag/tag.dart';
 
@@ -251,8 +251,6 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                     } else {
                       createTask();
                     }
-
-                    // ref.refresh(taskProvider);
                     showDialog(
                         useSafeArea: true,
                         context: context,
@@ -474,7 +472,6 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
   }
 
   List<DropdownMenuItem<TagData>> get dropdownItems {
-
     List<DropdownMenuItem<TagData>> menuItems = [];
     List<TagData> tagList = tagBox.values.toList();
     for (var i in tagList) {
@@ -544,27 +541,31 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
   }
 
   void processErrors(DioException e) {
-    showDialog(
-        useSafeArea: true,
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Error'),
-            content: Text(
-                'Error!\n${e.response
-                    ?.statusCode}: ${e
-                    .response
-                    ?.statusMessage}'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text(
-                    'Return'),
-              )
-            ],
-          );
-        });
+    if(e.type == DioExceptionType.badResponse || e.response?.statusCode == 401) {
+      context.go('/sign-in');
+    } else {
+      showDialog(
+          useSafeArea: true,
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Error'),
+              content: Text(
+                  'Error!\n${e.response
+                      ?.statusCode}: ${e
+                      .response
+                      ?.statusMessage}'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                      'Return'),
+                )
+              ],
+            );
+          });
+    }
   }
 }

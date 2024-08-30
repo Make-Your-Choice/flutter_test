@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:project1/model/task/task.dart';
-import 'package:project1/page/home.dart';
-import 'package:project1/page/login.dart';
-import 'package:project1/page/register.dart';
-import 'package:project1/page/tasks.dart';
 
-import '../page/add_task.dart';
+import '../ui/add_task.dart';
+import '../ui/home.dart';
+import '../ui/login.dart';
+import '../ui/register.dart';
+import '../ui/tasks.dart';
 
 final GoRouter router = GoRouter(
     routes: [

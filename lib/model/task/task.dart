@@ -37,8 +37,6 @@ class TaskData {
   @JsonKey(ignore: true)
   SyncStatus? syncStatus;
 
-  // TaskData(this.sid, this.title, this.text, this.isDone, this.tag,
-  //     [this.createdAt, this.priority = Priority.LOW, this.finishAt, this.isSynchronized = true]);
   TaskData(
       {this.sid,
       required this.title,
