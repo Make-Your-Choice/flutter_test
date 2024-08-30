@@ -580,7 +580,7 @@ class _TaskPageState extends ConsumerState<TasksPage> {
                 tagSid: task.tag.sid,
                 priority: task.priority);
             ref.watch(taskProvider.notifier).retryCreateTask(taskPost, task);
-          } else {
+          } else if(task.syncStatus == SyncStatus.SERVER_ONLY) {
             ref.watch(taskProvider.notifier).deleteTask(task.sid!);
           }}
     ) : IconButton(

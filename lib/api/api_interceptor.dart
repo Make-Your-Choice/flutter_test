@@ -18,7 +18,6 @@ class ApiInterceptor extends Interceptor {
   @override
   Future<void> onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
-    super.onRequest(options, handler);
     try {
       Storage.FlutterSecureStorage storage = const Storage
           .FlutterSecureStorage();
@@ -26,11 +25,11 @@ class ApiInterceptor extends Interceptor {
       String? refToken = await storage.read(key: 'refresh_token');
       if(acsToken != null && refToken != null) {
         Token token = Token(acsToken, refToken);
-        // Token token = await authToken;
         options.headers.addAll({
           'Authorization': 'Bearer ${token.accessToken}',
         });
         // return handler.next(options);
+        super.onRequest(options, handler);
       } else {
         throw DioException(
                 requestOptions: options,
@@ -72,9 +71,6 @@ class ApiInterceptor extends Interceptor {
       DioException err, ErrorInterceptorHandler handler) async {
     super.onError(err, handler);
     print('Error: ${err.response?.statusCode} - ${err.response?.statusMessage}');
-    // if(err.type == DioExceptionType.connectionError) {
-    //   throw err;
-    // }
       if (err.response?.data['code'] == 1) {
         await disposeToken();
       }
@@ -94,6 +90,7 @@ class ApiInterceptor extends Interceptor {
           return handler.resolve(await _retryRequest(err.requestOptions));
         } on DioException catch (e) {
           print('Error retry: ${e.response?.statusCode} - ${e.response?.statusMessage}');
+          rethrow;
         }
       }
       //return;

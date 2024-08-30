@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 import 'package:project1/api/api_service.dart';
@@ -9,7 +8,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../model/tag/tag.dart';
 import '../model/task post/task_post.dart';
 import '../model/task/task.dart';
-import '../model/token/token.dart';
 
 part 'provider.g.dart';
 
@@ -19,11 +17,6 @@ class Task extends _$Task {
 
   @override
   Future<List<TaskData>> build() async {
-    // service = await ApiService.create();
-
-    // if(isOffline) {
-    //   return fetchTasksOffline();
-    // }
     return fetchTasks();
   }
 
@@ -31,14 +24,14 @@ class Task extends _$Task {
 
   Future<List<TaskData>> fetchTasks() async {
     List<TaskData> content;
+    var service = await ApiService.create();
     try {
-      var service = await ApiService.create();
       content = await service.getTasks();
       ref.watch(connectionStateProvider.notifier).fetchNewState(true);
       return content;
-    } on DioException catch(e) {
-      if(e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.connectionError) {
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError) {
         ref.watch(connectionStateProvider.notifier).fetchNewState(false);
         return Hive.box<TaskData>('taskBox').values.toList();
       } else if (e.response?.statusCode == 401) {
@@ -53,15 +46,16 @@ class Task extends _$Task {
   Future<void> updateTask(TaskPutData task) async {
     var service = await ApiService.create();
     try {
-      if(task.syncStatus == SyncStatus.BOTH) {
+      if (task.syncStatus == SyncStatus.BOTH) {
         await service.putTask(task);
         ref.watch(connectionStateProvider.notifier).fetchNewState(true);
       } else {
         service.putTaskLocal(task);
       }
-    } on DioException catch(e) {
-      if(e.type == DioExceptionType.connectionTimeout ||
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.connectionError) {
+        ref.watch(connectionStateProvider.notifier).fetchNewState(false);
         service.putTaskLocal(task);
       } else if (e.response?.statusCode == 401) {
         ref.watch(tokenStateProvider.notifier).checkToken();
@@ -76,7 +70,16 @@ class Task extends _$Task {
 
   Future<void> createTask(TaskPostData task) async {
     var service = await ApiService.create();
-    await service.postTask(task);
+    try {
+      await service.postTask(task);
+      ref.watch(connectionStateProvider.notifier).fetchNewState(true);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout) {
+        ref.watch(connectionStateProvider.notifier).fetchNewState(false);
+        service.postTaskLocal(task);
+      }
+    }
     ref.invalidateSelf();
     await future;
   }
@@ -85,14 +88,16 @@ class Task extends _$Task {
     var service = await ApiService.create();
     try {
       await service.retryPostTask(taskPost, task);
-    } on DioException catch(e) {
-      if(e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.connectionError) {
+      ref.watch(connectionStateProvider.notifier).fetchNewState(true);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        ref.watch(connectionStateProvider.notifier).fetchNewState(false);
         rethrow;
       } else if (e.response?.statusCode == 401) {
         ref.watch(tokenStateProvider.notifier).checkToken();
         rethrow;
-     } else {
+      } else {
         rethrow;
       }
     }
@@ -102,11 +107,19 @@ class Task extends _$Task {
 
   Future<void> deleteTask(String sid) async {
     var service = await ApiService.create();
-    await service.deleteTask(sid);
+    try {
+      await service.deleteTask(sid);
+      ref.watch(connectionStateProvider.notifier).fetchNewState(true);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout) {
+        ref.watch(connectionStateProvider.notifier).fetchNewState(false);
+        Hive.box<TaskData>('taskBox').delete(sid);
+      }
+    }
     ref.invalidateSelf();
     await future;
   }
-
 }
 
 @Riverpod()
@@ -137,7 +150,7 @@ class TokenState extends _$TokenState {
       var service = await ApiService.create();
       bool isPresent = await service.checkToken();
       return isPresent;
-    } on DioException catch(e) {
+    } on DioException catch (e) {
       rethrow;
     }
   }
@@ -153,7 +166,7 @@ class TokenState extends _$TokenState {
 class ConnectionState extends _$ConnectionState {
   bool connectionState = true;
 
-@override
+  @override
   FutureOr<bool> build() {
     return connectionState;
   }

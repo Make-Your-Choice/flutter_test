@@ -23,9 +23,9 @@ class ApiService {
   static Future<ApiService> create() async {
     var service = ApiService._create();
     dio = Dio(BaseOptions(
-      connectTimeout: const Duration(seconds: 5),
-        sendTimeout: const Duration(seconds: 5),
-        receiveTimeout: const Duration(seconds: 5),
+      // connectTimeout: const Duration(seconds: 10),
+        // sendTimeout: const Duration(seconds: 5),
+        // receiveTimeout: const Duration(seconds: 5),
         baseUrl: 'https://test-mobile.estesis.tech/api/v1',
         headers: {
           HttpHeaders.contentTypeHeader: 'application/json',
@@ -37,15 +37,12 @@ class ApiService {
 
   List<TaskData> fetchData (List<TaskData> local, List<TaskData> server) {
     List<TaskData> data = [];
-
     for (var item in local) {
       item.syncStatus = SyncStatus.LOCAL_ONLY;
     }
-
     for (var item in server) {
       item.syncStatus = SyncStatus.SERVER_ONLY;
     }
-
     for(var item1 in local) {
       for(var item2 in server) {
         if(item1.sid == item2.sid) {
@@ -53,13 +50,15 @@ class ApiService {
             item1.syncStatus = SyncStatus.BOTH;
             item2.syncStatus = SyncStatus.BOTH;
           }
+          item2.syncStatus = SyncStatus.LOCAL_ONLY;
         }
       }
     }
-    // server.removeWhere((item) => item.syncStatus == SyncStatus.BOTH);
-    // data = {...local, ...server}.toList();
-    data = local;
-    data.sort((a, b) => a.syncStatus == SyncStatus.LOCAL_ONLY ? -1 : 1);
+    server.removeWhere((item) => item.syncStatus == SyncStatus.BOTH ||
+                                item.syncStatus == SyncStatus.LOCAL_ONLY);
+    data = {...local, ...server}.toList();
+    // data = local;
+    data.sort((a, b) => a.syncStatus == SyncStatus.BOTH ? 1 : -1);
     return data;
   }
 
@@ -73,7 +72,6 @@ class ApiService {
       tasks = (response.data['items'] as List)
           .map((i) => TaskData.fromJson(i))
           .toList();
-
       if (Hive.box<TaskData>('taskBox').isEmpty) {
         for (var item in tasks) {
           Hive.box<TaskData>('taskBox').put(item.sid, item);
@@ -94,36 +92,10 @@ class ApiService {
     TaskData newTask;
     try {
       response = await dio.post('/tasks', data: task);
-      if (response.statusCode == 200) {
-        newTask = TaskData.fromJson(response.data);
-        newTask.syncStatus = SyncStatus.BOTH;
-        // Hive.box<TaskData>('taskBox').add(newTask);
-        Hive.box<TaskData>('taskBox').put(newTask.sid, newTask);
-        return newTask;
-      } else if (response.statusCode == 500 ||
-          response.statusCode == 503 ||
-          response.statusCode == 504) {
-        TagData? tag = Hive.box<TagData>('tagBox').get(task.tagSid);
-        TaskData localTask = TaskData(
-            title: task.title,
-            text: task.text,
-            isDone: false,
-            tag: tag!,
-            priority: task.priority,
-            finishAt: task.finishAt,
-            syncStatus: SyncStatus.LOCAL_ONLY);
-        Hive.box<TaskData>('taskData').put(localTask.sid, localTask);
-        // Hive.box<TaskData>('taskBox').add(localTask);
-        return localTask;
-      } else {
-        throw DioException(
-            requestOptions: RequestOptions(),
-            response: Response(
-                requestOptions: RequestOptions(),
-                statusCode: 500,
-                statusMessage: 'Could not create task'));
-        // throw Exception('Could not create task!');
-      }
+      newTask = TaskData.fromJson(response.data);
+      newTask.syncStatus = SyncStatus.BOTH;
+      Hive.box<TaskData>('taskBox').put(newTask.sid, newTask);
+      return newTask;
     } on DioException catch (e) {
       rethrow;
     }
@@ -134,22 +106,21 @@ class ApiService {
     TaskData newTask;
     try {
       response = await dio.post('/tasks', data: taskPost);
-      // if (response.statusCode == 200) {
-        newTask = TaskData.fromJson(response.data);
-        newTask.syncStatus = SyncStatus.BOTH;
-        Hive.box<TaskData>('taskBox').delete(task.sid);
-        Hive.box<TaskData>('taskBox').put(newTask.sid, newTask);
-        TaskPutData taskPut = TaskPutData(
-            sid: newTask.sid!,
-            title: newTask.title,
-            text: newTask.text,
-            isDone: newTask.isDone,
-            tagSid: newTask.tag.sid,
-            priority: newTask.priority,
-          syncStatus: newTask.syncStatus
-        );
-        newTask = await putTask(taskPut);
-        return newTask;
+      newTask = TaskData.fromJson(response.data);
+      newTask.syncStatus = SyncStatus.BOTH;
+      Hive.box<TaskData>('taskBox').delete(task.sid);
+      Hive.box<TaskData>('taskBox').put(newTask.sid, newTask);
+      TaskPutData taskPut = TaskPutData(
+        sid: newTask.sid!,
+        title: newTask.title,
+        text: newTask.text,
+        isDone: newTask.isDone,
+        tagSid: newTask.tag.sid,
+        priority: newTask.priority,
+        syncStatus: newTask.syncStatus
+      );
+      newTask = await putTask(taskPut);
+      return newTask;
     } on DioException catch (e) {
       rethrow;
     }
@@ -163,53 +134,15 @@ class ApiService {
           newTask = TaskData.fromJson(response.data);
           Hive.box<TaskData>('taskBox').put(newTask.sid, newTask);
           return newTask;
-       // } else if (response.statusCode == 500 ||
-            //response.statusCode == 503 ||
-            //response.statusCode == 504) {
-        //   TagData? tag = Hive.box<TagData>('tagBox').get(task.tagSid);
-        //
-        //   TaskData? localTask = Hive.box<TaskData>('taskBox').get(task.sid);
-        //
-        //   localTask?.title = task.title;
-        //   localTask?.text = task.text;
-        //   localTask?.finishAt = task.finishAt;
-        //   localTask?.priority = task.priority;
-        //   localTask?.tag = tag!;
-        //   localTask?.isDone = task.isDone;
-        //
-        //   Hive.box<TaskData>('taskBox').put(localTask?.sid, localTask!);
-        //   return localTask;
-        // } else {
-        //   throw DioException(
-        //       requestOptions: RequestOptions(),
-        //       response: Response(
-        //           requestOptions: RequestOptions(),
-        //           statusCode: 500,
-        //           statusMessage: 'Could not update! Task not found!'));
-        //}
       } on DioException catch (e) {
         rethrow;
       }
   }
 
   Future<void> deleteTask(String sid) async {
-    Response<dynamic> response;
     try {
-      response = await dio.delete('/tasks', queryParameters: {'taskSid' : sid});
-      if (response.statusCode == 200) {
-        Hive.box<TaskData>('taskBox').delete(sid);
-      } else if (response.statusCode == 500 ||
-          response.statusCode == 503 ||
-          response.statusCode == 504) {
-        Hive.box<TaskData>('taskData').delete(sid);
-      } else {
-        throw DioException(
-            requestOptions: RequestOptions(),
-            response: Response(
-                requestOptions: RequestOptions(),
-                statusCode: 500,
-                statusMessage: 'Could not delete task'));
-      }
+      await dio.delete('/tasks', queryParameters: {'taskSid' : sid});
+      Hive.box<TaskData>('taskBox').delete(sid);
     } on DioException catch (e) {
       rethrow;
     }
@@ -350,6 +283,22 @@ class ApiService {
     String? acsToken = await storage.read(key: 'access_token');
     String? refToken = await storage.read(key: 'refresh_token');
     return Token(acsToken!, refToken!);
+  }
+
+  TaskData postTaskLocal(TaskPostData task) {
+    TagData? tag = Hive.box<TagData>('tagBox').get(task.tagSid);
+    TaskData localTask = TaskData(
+        sid: DateTime.now().toIso8601String(),
+        title: task.title,
+        text: task.text,
+        isDone: false,
+        tag: tag!,
+        priority: task.priority,createdAt: DateTime.now(),
+        finishAt: task.finishAt,
+        syncStatus: SyncStatus.LOCAL_ONLY
+    );
+    Hive.box<TaskData>('taskBox').put(localTask.sid, localTask);
+    return localTask;
   }
 
   TaskData putTaskLocal(TaskPutData task) {

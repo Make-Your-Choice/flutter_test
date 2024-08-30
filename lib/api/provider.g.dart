@@ -6,7 +6,7 @@ part of 'provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$taskHash() => r'fa13c4c4ad2e17ed948e46b6406431a659085c4c';
+String _$taskHash() => r'31d8bcce7f4936e5adf835975fe2f02cdd699bca';
 
 /// See also [Task].
 @ProviderFor(Task)
@@ -36,7 +36,7 @@ final tagProvider =
 );
 
 typedef _$Tag = AutoDisposeAsyncNotifier<List<TagData>>;
-String _$tokenStateHash() => r'9cb6911b29dfea9fef24114905d0b5283461ef14';
+String _$tokenStateHash() => r'b273096911ad4db551e6c69c01509ddf24b894b8';
 
 /// See also [TokenState].
 @ProviderFor(TokenState)
